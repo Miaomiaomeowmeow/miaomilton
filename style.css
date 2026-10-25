@@ -1,0 +1,74 @@
+/* 汉密尔顿：照官方的黑 + 金（海报金底、周边黑底金标） */
+:root {
+  --ink: #0b0607;
+  --gold: #d9a740;
+  --gold-hi: #f0c868;
+  --paper: #f3ead6;
+  --muted: #b9ab90;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--ink); color: var(--paper); overflow: hidden;
+  font-family: "Georgia", "Songti SC", "SimSun", serif; }
+canvas#scene { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; outline: none; }
+button { font: inherit; color: inherit; cursor: pointer; }
+
+#loading { position: fixed; inset: 0; display: grid; place-content: center; gap: 18px; background: var(--ink); z-index: 20; transition: opacity .6s; }
+#loading.gone { opacity: 0; pointer-events: none; }
+.load-title { font-size: 34px; letter-spacing: .08em; color: var(--gold); text-align: center; }
+.load-title span { display: block; font-size: 13px; letter-spacing: .5em; color: var(--muted); margin-top: 6px; }
+.load-track { width: 220px; height: 2px; background: #2a2018; margin: 0 auto; }
+.load-track i { display: block; height: 100%; width: 0; background: var(--gold); transition: width .3s; }
+
+#flip { position: fixed; right: 18px; bottom: 18px; z-index: 5; width: 40px; height: 40px; border-radius: 50%; border: none;
+  background: rgba(11, 6, 7, .45); color: var(--gold); font-size: 20px; line-height: 40px; padding: 0; backdrop-filter: blur(4px); }
+#flip:hover { background: rgba(11, 6, 7, .7); }
+#clap { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); z-index: 6; width: 56px; height: 56px; border-radius: 50%; border: none;
+  background: rgba(11, 6, 7, .55); font-size: 26px; line-height: 56px; padding: 0; backdrop-filter: blur(4px); animation: clap-pulse 1.2s ease-in-out infinite; }
+#clap[hidden] { display: none; }
+@keyframes clap-pulse { 0%, 100% { transform: translateX(-50%) scale(1); } 50% { transform: translateX(-50%) scale(1.12); } }
+#tip { position: fixed; left: 18px; top: 18px; z-index: 5; max-width: min(340px, calc(100vw - 90px)); padding: 8px 12px 9px; background: #efe4c6; color: #3b2a1c;
+  font-size: 13px; line-height: 1.5; border-radius: 1px; box-shadow: 0 2px 8px rgba(0, 0, 0, .35); transform: rotate(-1.2deg); transition: opacity .5s; }
+#tip-now { margin: 0; }
+#tip span { display: block; font-size: 11.5px; color: #6b5640; font-style: italic; }
+#tip-toggle { margin-top: 6px; padding: 0; background: none; border: none; border-top: 1px dashed #b9a47c; width: 100%; text-align: left; padding-top: 5px; font-size: 12px; color: #6b4a1c; }
+#tip-list { margin: 4px 0 0; padding: 0; list-style: none; font-size: 12px; line-height: 1.55; }
+#tip-list[hidden] { display: none; }
+#tip-list li.h { margin-top: 5px; font-weight: 700; color: #6b4a1c; }
+#tip-list li.ok { color: #8a7a62; text-decoration: line-through; }
+#tip-list li.ok::before { content: "✓ "; text-decoration: none; }
+#tip.fade { opacity: 0; }
+#tip[hidden] { display: none; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+#acts { position: fixed; left: 50%; top: 18px; transform: translateX(-50%); display: flex; gap: 4px; z-index: 5; }
+#acts[hidden] { display: none; }
+#acts button { background: none; border: none; padding: 4px 10px; font-size: 13px; color: rgba(243, 234, 214, .55); }
+#acts button span { color: var(--gold); margin-right: 6px; }
+#acts button[aria-pressed="true"] { color: var(--paper); box-shadow: inset 0 -1px 0 var(--gold); }
+
+#card { position: fixed; left: 18px; bottom: 18px; width: min(380px, calc(100vw - 36px)); background: rgba(11, 6, 7, .9); border: 1px solid #5a4520; border-top: 3px solid var(--gold); padding: 16px 18px 14px; z-index: 6; }
+#card-close { position: absolute; right: 8px; top: 6px; background: none; border: none; font-size: 22px; color: var(--muted); }
+#card .kind { font-size: 11px; letter-spacing: .25em; color: var(--gold); text-transform: uppercase; }
+#card h2 { margin: 6px 0 2px; font-size: 22px; font-weight: 700; }
+#card .en-title { font-size: 13px; color: var(--muted); font-style: italic; }
+#card p { margin: 10px 0 0; font-size: 14px; line-height: 1.6; }
+#card p.en { font-size: 12.5px; color: var(--muted); margin-top: 6px; }
+#spotify { height: 80px; margin-top: 12px; }
+#card.no-song #spotify { display: none; }
+#player { position: fixed; z-index: 7; height: 80px; width: 340px; transition: none; }
+#player.away { left: -9999px !important; top: 0 !important; }
+#player iframe { border-radius: 8px; }
+
+dialog#credits { max-width: 560px; background: #140c0a; color: var(--paper); border: 1px solid #5a4520; padding: 18px 22px; }
+dialog#credits::backdrop { background: rgba(0, 0, 0, .6); }
+dialog#credits h3 { color: var(--gold); margin-top: 0; }
+dialog#credits p { font-size: 13.5px; line-height: 1.6; }
+dialog#credits p.en { color: var(--muted); font-size: 12.5px; }
+#credits-close { background: none; border: 1px solid #5a4520; color: var(--gold); padding: 6px 12px; }
+
+@media (max-width: 640px) {
+  #card { left: 12px; right: 12px; bottom: 12px; width: auto; }
+  #acts { top: 12px; }
+  #acts button { padding: 4px 6px; font-size: 12px; }
+  #flip { right: 12px; bottom: auto; top: 12px; }
+  body.acts-open #flip { top: 48px; }
+}

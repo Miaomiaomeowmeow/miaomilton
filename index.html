@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b0607">
+<title>喵剧一堂 · 汉密尔顿</title>
+<link rel="stylesheet" href="style.css">
+<link rel="modulepreload" href="./vendor/build/three.core.js">
+<link rel="modulepreload" href="./vendor/build/three.module.js">
+<link rel="preload" href="./assets/bill-front.webp" as="image" crossorigin="anonymous">
+<link rel="preload" href="./assets/bill-back.webp" as="image" crossorigin="anonymous">
+<link rel="preload" href="./assets/street-blur.webp" as="image" crossorigin="anonymous">
+<script type="importmap">{"imports":{"three":"./vendor/build/three.module.js","three/addons/":"./vendor/examples/jsm/"}}</script>
+</head>
+<body>
+<canvas id="scene" aria-label="一张 10 美元钞票。拖动倾斜，点上面的图案" tabindex="0"></canvas>
+
+<div id="loading" aria-live="polite">
+  <div class="load-title">汉密尔顿<span>HAMILTON</span></div>
+  <div class="load-track"><i id="load-bar"></i></div>
+</div>
+
+
+
+<!-- 用户 10-23：先不放标题、品牌字、版权按钮这类 HTML 字；按钮做少做小，等全站统一样式 -->
+<button id="flip" type="button" aria-label="翻面 · Flip" title="翻面 · Flip">⟲</button>
+<button id="clap" type="button" hidden aria-label="鼓掌 · Applaud" title="鼓掌 · Applaud">👏</button>
+<p id="hint" class="sr" role="status"></p>
+<div id="tip" hidden><p id="tip-now" role="status"></p><button id="tip-toggle" type="button" aria-expanded="false"></button><ul id="tip-list" hidden></ul></div>   <!-- 提示纸条：上面一句现在能做什么（一直在），下面彩蛋清单（样式等全站界面定了再统一） -->
+<nav id="acts" aria-label="主线三幕" hidden></nav>
+
+<section id="card" hidden aria-live="polite">
+  <button id="card-close" type="button" aria-label="关上">×</button>
+  <div class="kind" id="card-kind"></div>
+  <h2 id="card-zh"></h2>
+  <div class="en-title" id="card-en"></div>
+  <p id="card-line"></p>
+  <p class="en" id="card-line-en"></p>
+  <div id="spotify"></div>
+</section>
+<div id="player" class="away"><div id="spotify-frame"></div></div>
+
+<dialog id="credits">
+  <h3>声音与版权 · Credits</h3>
+  <p>本作品是非商业的粉丝创作，与音乐剧《汉密尔顿》官方无关。《Hamilton》词曲 Lin-Manuel Miranda，版权归原权利人所有。网页里的歌通过 Spotify 官方播放器播放（2015 百老汇原卡司录音），没有登录 Spotify 时只能听一小段预览。如权利人认为不妥，联系后会立即移除。</p>
+  <p class="en">This is a non-commercial fan project and is not affiliated with the official production of <i>Hamilton</i>. Book, music and lyrics by Lin-Manuel Miranda; all rights belong to their respective owners. Songs play through Spotify's official embedded player (Original Broadway Cast Recording, 2015); without a Spotify login only a short preview plays. If you are a rights holder and object, please contact us and it will be removed promptly.</p>
+  <p class="en">The note is based on public-domain images of the series 2021 $10 Federal Reserve Note (Wikimedia Commons). Serial numbers and signatures are removed and replaced with “MIAOSICAL FAN”. This is not currency.</p>
+  <button id="credits-close" type="button">关闭 · Close</button>
+</dialog>
+
+<script type="module" src="main.js"></script>
+</body>
+</html>

@@ -1,10 +1,21 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0b0607">
-<title>喵剧一堂 · 汉密尔顿</title>
+<title>Miaomilton · 喵密尔顿</title>
+<script>document.documentElement.lang = /^zh/i.test(navigator.language || '') ? 'zh-CN' : 'en';</script>   <!-- 中文浏览器中文在前，其他英文在前（用户 10-25：观众主要是国外朋友） -->
+<meta name="description" content="A ten-dollar bill that stages Hamilton: the portrait stands up into a pop-up stage, five scenes hide in the note's security features, and the bill folds into a star. A fan work.">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Miaomilton · 喵密尔顿">
+<meta property="og:description" content="A ten-dollar bill that stages Hamilton: the portrait stands up into a pop-up stage, five scenes hide in the note's security features, and the bill folds into a star. A fan work.">
+<meta property="og:url" content="https://miaomiaomeowmeow.github.io/miaomilton/">
+<meta property="og:image" content="https://miaomiaomeowmeow.github.io/miaomilton/assets/og-cover.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="stylesheet" href="style.css">
 <link rel="modulepreload" href="./vendor/build/three.core.js">
 <link rel="modulepreload" href="./vendor/build/three.module.js">
@@ -14,10 +25,10 @@
 <script type="importmap">{"imports":{"three":"./vendor/build/three.module.js","three/addons/":"./vendor/examples/jsm/"}}</script>
 </head>
 <body>
-<canvas id="scene" aria-label="一张 10 美元钞票。拖动倾斜，点上面的图案" tabindex="0"></canvas>
+<canvas id="scene" aria-label="A ten-dollar bill. Drag to tilt, click the pictures on it · 一张 10 美元钞票。拖动倾斜，点上面的图案" tabindex="0"></canvas>
 
 <div id="loading" aria-live="polite">
-  <div class="load-title">汉密尔顿<span>HAMILTON</span></div>
+  <div class="load-title"><b class="l-en">Miaomilton<span>喵密尔顿 · a $10 bill that stages Hamilton</span></b><b class="l-zh">喵密尔顿<span>MIAOMILTON</span></b></div>
   <div class="load-track"><i id="load-bar"></i></div>
 </div>
 
@@ -34,6 +45,7 @@
   <button id="card-close" type="button" aria-label="关上">×</button>
   <div class="kind" id="card-kind"></div>
   <h2 id="card-zh"></h2>
+  <button id="card-more" type="button" aria-expanded="false"></button>   <!-- 窄窗口：说明卡先收成一行，点它展开（不挡画面） -->
   <div class="en-title" id="card-en"></div>
   <p id="card-line"></p>
   <p class="en" id="card-line-en"></p>

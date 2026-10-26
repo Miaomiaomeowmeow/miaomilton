@@ -16,6 +16,9 @@ button { font: inherit; color: inherit; cursor: pointer; }
 #loading.gone { opacity: 0; pointer-events: none; }
 .load-title { font-size: 34px; letter-spacing: .08em; color: var(--gold); text-align: center; }
 .load-title span { display: block; font-size: 13px; letter-spacing: .5em; color: var(--muted); margin-top: 6px; }
+.load-title b { font-weight: inherit; display: block; }
+.load-title .l-en span { letter-spacing: .12em; }
+html[lang="en"] .load-title .l-zh, html:not([lang="en"]) .load-title .l-en { display: none; }
 .load-track { width: 220px; height: 2px; background: #2a2018; margin: 0 auto; }
 .load-track i { display: block; height: 100%; width: 0; background: var(--gold); transition: width .3s; }
 
@@ -54,6 +57,13 @@ button { font: inherit; color: inherit; cursor: pointer; }
 #card p.en { font-size: 12.5px; color: var(--muted); margin-top: 6px; }
 #spotify { height: 80px; margin-top: 12px; }
 #card.no-song #spotify { display: none; }
+#card-more { display: none; background: none; border: none; padding: 4px 0 0; font-size: 12px; color: var(--gold); }
+@media (max-width: 999px) {   /* 窄窗口：说明卡先只露类别 + 标题，点「更多」才展开正文和播放器 */
+  #card { width: min(340px, calc(100vw - 24px)); padding: 12px 14px 10px; }
+  #card h2 { font-size: 18px; }
+  #card-more { display: block; }
+  #card:not(.open) .en-title, #card:not(.open) p, #card:not(.open) #spotify { display: none; }
+}
 #player { position: fixed; z-index: 7; height: 80px; width: 340px; transition: none; }
 #player.away { left: -9999px !important; top: 0 !important; }
 #player iframe { border-radius: 8px; }

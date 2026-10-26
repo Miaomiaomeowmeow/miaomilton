@@ -352,7 +352,7 @@ function draw() {
   uniforms.uTime.value = now / 1000;
   if (state.phase === 'drop') {   // 折着的钞票落到桌上 → 先打开第二折 → 再打开第一折
     const t = now - state.t0;
-    const d = clamp01(t / 700), u2 = clamp01((t - 800) / 750), u1 = clamp01((t - 1650) / 850);
+    const d = clamp01(t / 700), u2 = clamp01((t - 800) / 750), u1 = clamp01((t - 1300) / 950);   // 两次展开接上，别停在对折露半张背面的样子（评估 10-25：像坏掉的钞票）
     pivot.position.set(0, (1 - ease(d)) * 1.1, (1 - ease(d)) * -1.6);   // 从街上飞过来，落到眼前
     pivot.rotation.z = (1 - ease(d)) * .7;
     uniforms.uFold2.value = 1 - ease(u2);
@@ -662,7 +662,7 @@ function open(key) {
   if (key === 'watermark') { state.elizaT0 = performance.now() + 2500; if (!uniforms.mapEliza.value) texLoader.load('./assets/eliza-sil.png', t => { uniforms.mapEliza.value = t; wake(); }); }
   eggTo(key, 1);   // 立体书彩蛋：背面大楼立起、火炬旁两个人影、十步决斗
   active = { key, act: -1 };
-  fillCard({ kind: '彩蛋 · ' + egg.how + ' · ' + egg.howEn, zh: egg.zh, en: egg.en, line: egg.line, lineEn: egg.lineEn, track: egg.track });
+  fillCard({ kind: '彩蛋 · ' + egg.how + ' · ' + egg.howEn, kindEn: 'Easter egg · ' + egg.howEn, zh: egg.zh, en: egg.en, line: egg.line, lineEn: egg.lineEn, track: egg.track });
 }
 async function popUp() {
   if (state.phase !== 'idle' || state.flipTo) return;   // 钞票没展开完、或翻在背面时不立起来
@@ -711,14 +711,16 @@ function showAct(i) {
   active = { key: 'portrait', act: i };
   $('#acts').hidden = false; document.body.classList.add('acts-open');
   document.querySelectorAll('#acts button').forEach((b, j) => b.setAttribute('aria-pressed', j === i));
-  fillCard({ kind: '主线 · 第 ' + a.no + ' 幕 · Act ' + a.no, zh: a.zh, en: a.en, line: a.line, lineEn: a.lineEn, track: a.track });
+  fillCard({ kind: '主线 · 第 ' + a.no + ' 幕 · Act ' + a.no, kindEn: 'Act ' + a.no + ' · 第 ' + a.no + ' 幕', zh: a.zh, en: a.en, line: a.line, lineEn: a.lineEn, track: a.track });
 }
 function fillCard(c) {
   $('#card').hidden = false; document.body.classList.add('card-open');
   $('#card').classList.toggle('no-song', !c.track);
-  $('#card-kind').textContent = c.kind;
-  $('#card-zh').textContent = c.zh; $('#card-en').textContent = c.en;
-  $('#card-line').textContent = c.line; $('#card-line-en').textContent = c.lineEn;
+  $('#card-kind').textContent = EN_FIRST ? c.kindEn : c.kind;
+  const [t1, t2] = L2(c.zh, c.en), [p1, p2] = L2(c.line, c.lineEn);
+  $('#card-zh').textContent = t1; $('#card-en').textContent = t2;
+  $('#card-line').textContent = p1; $('#card-line-en').textContent = p2;
+  $('#card').classList.remove('open'); setCardMore();   // 窄窗口每次先收成一行
   if (c.track) play(c.track); else stop();
   $('#player').classList.add('away'); clearTimeout(playerTimer); playerTimer = setTimeout(placePlayer, 900);
   wake();
@@ -731,6 +733,9 @@ function closeCard() {
   document.querySelectorAll('#acts button').forEach(b => b.setAttribute('aria-pressed', false)); wake();
 }
 $('#card-close').addEventListener('click', closeCard);
+const narrow = () => matchMedia('(max-width: 999px)').matches;
+function setCardMore() { const o = $('#card').classList.contains('open'); $('#card-more').textContent = o ? L1('▴ 收起', '▴ Less') : L1('▸ 更多 · 听歌', '▸ More · listen'); $('#card-more').setAttribute('aria-expanded', o); }
+$('#card-more').addEventListener('click', () => { $('#card').classList.toggle('open'); setCardMore(); placePlayer(); });
 // 彩蛋② Yorktown：点火炬 → 火炬立起（舞台没立时单独立）、火焰亮 → 放了几秒停住，等访客鼓掌才接着放
 // 原版演出唱到「移民，我们把事办成」那句，观众每场都欢呼，演出要多奏几小节等掌声停下来（NBC 2025）
 let clapTimer = 0;
@@ -796,7 +801,10 @@ ACTS.forEach((a, i) => {
 let tipTimer = 0, tipped = false;
 // 用户 10-24：提示要一直在（翻回正面也在），还要有彩蛋清单和最后怎么结束。showTip = 临时说一句，hideTip = 回到「现在能做什么」
 let tipHeld = '';
-function setTipText(zh, en) { const t = $('#tip'); $('#tip-now').innerHTML = `${zh}<span>${en}</span>`; t.hidden = false; }
+const EN_FIRST = !/^zh/i.test(navigator.language || '');   // 中文浏览器中文在前，其他英文在前（用户 10-25）
+const L2 = (zh, en) => EN_FIRST ? [en, zh] : [zh, en];   // 两种语言谁在前
+const L1 = (zh, en) => EN_FIRST ? en : zh;   // 只放一种时用哪种
+function setTipText(zh, en) { const t = $('#tip'), [a, b] = L2(zh, en); $('#tip-now').innerHTML = `${a}<span>${b}</span>`; t.hidden = false; }
 function showTip(zh, en) { tipHeld = zh; setTipText(zh, en); clearTimeout(tipTimer); }
 function hideTip(soon) { clearTimeout(tipTimer); tipTimer = setTimeout(() => { tipHeld = ''; refreshTip(true); }, soon ? 0 : 6000); }
 const EXIT = ['点汉密尔顿或屏幕空白处，收起舞台', 'click Hamilton or anywhere empty to fold the stage away'];
@@ -819,16 +827,16 @@ function refreshTip(force) {   // 状态变了就换「现在能做什么」，�
   const key = b[0] + '|' + Object.keys(f).join() + '|' + Object.keys(v).join();
   if (key === tipKey && !force) return; tipKey = key;
   if (!tipHeld) setTipText(b[0], b[1]);
-  const EGG = [['torch', '火炬'], ['people', '红字 We the People'], ['ten', '右下角的 10（点它，或倾斜钞票让它变绿）'], ['watermark', '左边的水印（对着光才看得见）'], ['treasury', '财政部大楼']];
+  const EGG = [['torch', L1('火炬', 'The torch')], ['people', L1('红字 We the People', 'The red “We the People”')], ['ten', L1('右下角的 10（点它，或倾斜钞票让它变绿）', 'The 10 in the corner (click it, or tilt the bill until it turns green)')], ['watermark', L1('左边的水印（对着光才看得见）', 'The watermark on the left (only visible against the light)')], ['treasury', L1('财政部大楼', 'The Treasury building')]];
   const n = EGG.filter(([k]) => f[k]).length;
   const na = [0, 1, 2].filter(i => v[i]).length;   // 主线也要数上（用户 10-24：只写彩蛋 5/5 会以为找齐了，其实三幕还没看完）
-  $('#tip-toggle').textContent = `主线 ${na}/3 · 彩蛋 ${n}/5 · 清单 ${$('#tip-list').hidden ? '▾' : '▴'}`;
+  $('#tip-toggle').textContent = `${L1('主线', 'Acts')} ${na}/3 · ${L1('彩蛋', 'Easter eggs')} ${n}/5 · ${L1('清单', 'List')} ${$('#tip-list').hidden ? '▾' : '▴'}`;
   const li = (txt, ok, cls) => `<li class="${ok ? 'ok' : ''}${cls ? ' ' + cls : ''}">${txt}</li>`;
-  $('#tip-list').innerHTML = li('主线（点头像）', 0, 'h') + ACTS.map((a, i) => li(`${a.no} ${a.en}`, v[i])).join('')
-    + li('正面彩蛋', 0, 'h') + EGG.slice(0, 3).map(([k, t]) => li(t, f[k])).join('')
-    + li('背面彩蛋', 0, 'h') + EGG.slice(3).map(([k, t]) => li(t, f[k])).join('')
-    + li('怎么玩', 0, 'h') + li('翻面：点左下角翘起的角（翻到背面后它在右下角）') + li('收起舞台：点汉密尔顿或屏幕空白处')
-    + li('主线三幕都看过、5 个彩蛋都找到以后：钞票正中出现金星，点它折成星', state.folding);
+  $('#tip-list').innerHTML = li(L1('主线（点头像）', 'Main acts (click the portrait)'), 0, 'h') + ACTS.map((a, i) => li(`${a.no} ${a.en}`, v[i])).join('')
+    + li(L1('正面彩蛋', 'On the front'), 0, 'h') + EGG.slice(0, 3).map(([k, t]) => li(t, f[k])).join('')
+    + li(L1('背面彩蛋', 'On the back'), 0, 'h') + EGG.slice(3).map(([k, t]) => li(t, f[k])).join('')
+    + li(L1('怎么玩', 'How to play'), 0, 'h') + li(L1('翻面：点左下角翘起的角（翻到背面后它在右下角）', 'Flip: click the curled corner (bottom left; bottom right on the back)')) + li(L1('收起舞台：点汉密尔顿或屏幕空白处', 'Fold the stage away: click Hamilton or anywhere empty'))
+    + li(L1('主线三幕都看过、5 个彩蛋都找到以后：钞票正中出现金星，点它折成星', 'After all 3 acts and 5 eggs: a gold star appears in the middle; click it and the bill folds into a star'), state.folding);
 }
 $('#tip-toggle').addEventListener('click', () => { const l = $('#tip-list'); l.hidden = !l.hidden; $('#tip-toggle').setAttribute('aria-expanded', !l.hidden); refreshTip(true); });
 function setHint() {
@@ -863,7 +871,7 @@ function stop() { wantPlay = false; try { spotify && spotify.pause(); } catch (e
 let playerTimer = 0;
 function placePlayer() {
   const p = $('#player'), slot = $('#spotify');
-  if ($('#card').hidden || $('#card').classList.contains('no-song')) { p.classList.add('away'); return; }
+  if ($('#card').hidden || $('#card').classList.contains('no-song') || (narrow() && !$('#card').classList.contains('open'))) { p.classList.add('away'); return; }   // 窄窗口说明卡收着时，播放器藏起来（歌照常放）
   const r = slot.getBoundingClientRect(); p.classList.remove('away');
   Object.assign(p.style, { left: r.left + 'px', top: r.top + 'px', width: r.width + 'px' });
 }

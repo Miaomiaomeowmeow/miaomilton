@@ -232,7 +232,8 @@ const loadTex = url => new Promise((res, rej) => texLoader.load(url, t => { t.co
 async function boot() {
   mark('bootStart');
   const bar = $('#load-bar'); let got = 0; const step = () => { got++; bar.style.width = (got / 4 * 100) + '%'; };
-  const [f, b, bg] = await Promise.all(['bill-front', 'bill-back', 'street-blur'].map(n => loadTex(`./assets/${n}.webp`).then(t => (step(), t))));
+  const bgName = document.documentElement.dataset.bg || 'street-blur';   // 独立网站打包时换成 bg-standalone（雕版头像 + 枪），街上版仍是虚化街道
+  const [f, b, bg] = await Promise.all(['bill-front', 'bill-back', bgName].map(n => loadTex(`./assets/${n}.webp`).then(t => (step(), t))));
   uniforms.mapF.value = f; uniforms.mapB.value = b;
   bgTex = bg; bgTex.anisotropy = 1; scene.background = bgTex; fitBackground();
   const mask = await new Promise((res, rej) => texLoader.load('./assets/portrait-mask.png', res, undefined, rej));   // 头像剪空遮罩（tools/make_portrait_fill.py）

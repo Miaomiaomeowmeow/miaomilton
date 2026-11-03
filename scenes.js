@@ -57,7 +57,7 @@ export const EGGS = {
     how: '背面的大楼', howEn: 'The building on the back',
     line: '他是美国第一任财政部长，所以印在钞票上。2015 年财政部本想让一位女性登上新的 10 美元；这部剧太火，2016 年改成他留下，废奴英雄哈丽特·塔布曼改上 20 美元。',
     lineEn: 'He was the first Secretary of the Treasury — that is why he is on the note. In 2015 the Treasury planned to put a woman on a new $10; the musical was so popular that in 2016 he stayed, and abolitionist Harriet Tubman was moved to the $20 instead.',
-    track: null },
+    track: '3TfKt8mPpdXfQTMfRjHzyz' },   // Cabinet Battle #1：财政部长汉密尔顿在内阁里为财政计划跟杰斐逊对唱辩论（用户 11-03：大楼出来没音乐很怪）
 };
 
 // 全站播放器定案（声音与版权说明.md「★ 播放器定案」）：国外 Spotify，国内网易云外链播放器，QQ 音乐只给跳转。

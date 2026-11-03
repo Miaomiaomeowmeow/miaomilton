@@ -1,72 +1,101 @@
-/* 汉密尔顿：照官方的黑 + 金（海报金底、周边黑底金标） */
+/* 汉密尔顿：加载页照官方黑 + 金；进来以后的界面照钞票（用户 11-03 定稿：固定分区 + 钞票雕版） */
 :root {
   --ink: #0b0607;
   --gold: #d9a740;
   --gold-hi: #f0c868;
   --paper: #f3ead6;
   --muted: #b9ab90;
+  --bill-ink: #4a4532;   /* 钞票油墨橄榄墨：界面的线和字 */
+  --bill-paper: #ebe2c4; /* 钞票纸色：圆章框心 */
+  --bill-cream: #f2ead2;
 }
+html:not([data-bg="bg-standalone"]) {   /* 街上版（深色虚化街道）：线和字反过来用米白，光晕用深色 */
+  --bill-ink: #efe5cb; --bill-paper: #2a241b; --bill-cream: #2a241b;
+  --wash-a: rgba(18, 13, 9, .82); --wash-b: rgba(18, 13, 9, .55); --wash-c: rgba(18, 13, 9, 0);
+}
+html[data-bg="bg-standalone"] { --wash-a: rgba(236, 227, 198, .95); --wash-b: rgba(231, 220, 185, .75); --wash-c: rgba(231, 220, 185, 0); }
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; background: var(--ink); color: var(--paper); overflow: hidden;
   font-family: "Georgia", "Songti SC", "SimSun", serif; }
 canvas#scene { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; outline: none; }
 button { font: inherit; color: inherit; cursor: pointer; }
 
-#loading { position: fixed; inset: 0; display: grid; place-content: center; gap: 18px; background: var(--ink); z-index: 20; transition: opacity .6s; }
+/* 加载动画 · 印钞机（用户 11-03 定） */
+#loading { position: fixed; inset: 0; z-index: 20; overflow: hidden; transition: opacity .7s; background: #cbbf97; }
+html:not([data-bg="bg-standalone"]) #loading { background: #1a1510 url(./assets/street-blur.webp) center/cover; }
+html[data-bg="bg-standalone"] #loading { background: #cbbf97 url(./assets/bg-standalone.webp) center/cover; }
+#loading::before { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 48%, rgba(236,228,200,.8), rgba(222,210,172,.55) 60%, rgba(200,186,146,.35)); }
 #loading.gone { opacity: 0; pointer-events: none; }
-.load-title { font-size: 34px; letter-spacing: .08em; color: var(--gold); text-align: center; }
-.load-title span { display: block; font-size: 13px; letter-spacing: .5em; color: var(--muted); margin-top: 6px; }
-.load-title b { font-weight: inherit; display: block; }
-.load-title .l-en span { letter-spacing: .12em; }
-html[lang="en"] .load-title .l-zh, html:not([lang="en"]) .load-title .l-en { display: none; }
-.load-track { width: 220px; height: 2px; background: #2a2018; margin: 0 auto; }
-.load-track i { display: block; height: 100%; width: 0; background: var(--gold); transition: width .3s; }
+#ld { position: absolute; left: 50%; top: 50%; width: 1000px; height: 640px; transform-origin: 50% 50%; }
+#ld-sheet { position: absolute; left: 120px; top: 110px; width: 760px; height: 322px; background: #efe6cb;
+  box-shadow: 0 2px 2px rgba(60,45,20,.25), 0 18px 30px -12px rgba(60,45,20,.45); transition: transform .9s cubic-bezier(.2,.8,.3,1), box-shadow .9s; }
+#ld-print { position: absolute; inset: 0; background: url(./assets/bill-front.webp) center/100% 100%; clip-path: inset(0 100% 0 0); }
+#ld-wet { position: absolute; top: 0; bottom: 0; width: 160px; background: linear-gradient(90deg, transparent, rgba(30,40,25,.12) 70%, rgba(255,250,230,.35) 92%, transparent); mix-blend-mode: multiply; }
+#ld-roller { position: absolute; top: 10px; width: 206px; height: 544px; margin-left: -118px; filter: drop-shadow(10px 10px 8px rgba(50,35,10,.35)); }
+#ld-roller img { display: block; width: 100%; height: 100%; }
+#ld-roller canvas { position: absolute; left: 76px; top: 109px; width: 87px; height: 334px; }
+#ld-roller .wh { position: absolute; width: 38px; height: 38px; left: 1.6px; margin-top: -19px; }
+#ld-count { position: absolute; left: 500px; top: 560px; transform: translateX(-50%); text-align: center; color: #3f5a46; white-space: nowrap; }
+#ld-count .no { font: 600 30px/1 Cinzel, Georgia, serif; letter-spacing: .18em; }
+#ld-count .cap { margin-top: 10px; font: italic 500 17px "Cormorant Garamond", Georgia, serif; color: #4a4532; letter-spacing: .04em; }
+#ld-count .cap::before, #ld-count .cap::after { content: ""; display: inline-block; width: 30px; border-top: 1px solid #4a4532; vertical-align: middle; margin: 0 12px; }
+#loading.printed #ld-sheet { transform: translateY(-14px) scale(1.03) rotate(-1.2deg); box-shadow: 0 2px 2px rgba(60,45,20,.2), 0 40px 50px -16px rgba(60,45,20,.5); }
+#loading.printed #ld-roller { transition: left 1s cubic-bezier(.5,0,.8,.4), opacity 1s; left: 1080px !important; opacity: 0; }
 
-#flip { position: fixed; right: 18px; bottom: 18px; z-index: 5; width: 40px; height: 40px; border-radius: 50%; border: none;
-  background: rgba(11, 6, 7, .45); color: var(--gold); font-size: 20px; line-height: 40px; padding: 0; backdrop-filter: blur(4px); }
-#flip:hover { background: rgba(11, 6, 7, .7); }
-#clap { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); z-index: 6; width: 56px; height: 56px; border-radius: 50%; border: none;
-  background: rgba(11, 6, 7, .55); font-size: 26px; line-height: 56px; padding: 0; backdrop-filter: blur(4px); animation: clap-pulse 1.2s ease-in-out infinite; }
-#clap[hidden] { display: none; }
-@keyframes clap-pulse { 0%, 100% { transform: translateX(-50%) scale(1); } 50% { transform: translateX(-50%) scale(1.12); } }
-#tip { position: fixed; left: 18px; top: 18px; z-index: 5; max-width: min(340px, calc(100vw - 90px)); padding: 8px 12px 9px; background: #efe4c6; color: #3b2a1c;
-  font-size: 13px; line-height: 1.5; border-radius: 1px; box-shadow: 0 2px 8px rgba(0, 0, 0, .35); transform: rotate(-1.2deg); transition: opacity .5s; }
-#tip-now { margin: 0; }
-#tip span { display: block; font-size: 11.5px; color: #6b5640; font-style: italic; }
-#tip-toggle { margin-top: 6px; padding: 0; background: none; border: none; border-top: 1px dashed #b9a47c; width: 100%; text-align: left; padding-top: 5px; font-size: 12px; color: #6b4a1c; }
-#tip-list { margin: 4px 0 0; padding: 0; list-style: none; font-size: 12px; line-height: 1.55; }
-#tip-list[hidden] { display: none; }
-#tip-list li.h { margin-top: 5px; font-weight: 700; color: #6b4a1c; }
-#tip-list li.ok { color: #8a7a62; text-decoration: line-through; }
-#tip-list li.ok::before { content: "✓ "; text-decoration: none; }
-#tip.fade { opacity: 0; }
-#tip[hidden] { display: none; }
+#flip, #clap, #acts { display: none !important; }   /* 翻面在卷角、鼓掌点舞台、第几幕在圆章里：不另放按钮 */
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
-#acts { position: fixed; left: 50%; top: 18px; transform: translateX(-50%); display: flex; gap: 4px; z-index: 5; }
-#acts[hidden] { display: none; }
-#acts button { background: none; border: none; padding: 4px 10px; font-size: 13px; color: rgba(243, 234, 214, .55); }
-#acts button span { color: var(--gold); margin-right: 6px; }
-#acts button[aria-pressed="true"] { color: var(--paper); box-shadow: inset 0 -1px 0 var(--gold); }
 
-#card { position: fixed; left: 18px; bottom: 18px; width: min(380px, calc(100vw - 36px)); background: rgba(11, 6, 7, .9); border: 1px solid #5a4520; border-top: 3px solid var(--gold); padding: 16px 18px 14px; z-index: 6; }
-#card-close { position: absolute; right: 8px; top: 6px; background: none; border: none; font-size: 22px; color: var(--muted); }
-#card .kind { font-size: 11px; letter-spacing: .25em; color: var(--gold); text-transform: uppercase; }
-#card h2 { margin: 6px 0 2px; font-size: 22px; font-weight: 700; }
-#card .en-title { font-size: 13px; color: var(--muted); font-style: italic; }
-#card p { margin: 10px 0 0; font-size: 14px; line-height: 1.6; }
-#card p.en { font-size: 12.5px; color: var(--muted); margin-top: 6px; }
-#spotify { height: 80px; margin-top: 12px; }
-#card.no-song #spotify { display: none; }
-#card-more { display: none; background: none; border: none; padding: 4px 0 0; font-size: 12px; color: var(--gold); }
-@media (max-width: 999px) {   /* 窄窗口：说明卡先只露类别 + 标题，点「更多」才展开正文和播放器 */
-  #card { width: min(340px, calc(100vw - 24px)); padding: 12px 14px 10px; }
-  #card h2 { font-size: 18px; }
-  #card-more { display: block; }
-  #card:not(.open) .en-title, #card:not(.open) p, #card:not(.open) #spotify { display: none; }
-}
-#player { position: fixed; z-index: 7; height: 80px; width: 340px; transition: none; }
+/* ── 上条：Street · EN/中 · Sound · Stamps，正中一行舞台提示 ── */
+#hud[hidden] { display: none; }
+#corners { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 4; }
+.key { position: fixed; z-index: 6; display: flex; align-items: center; gap: 8px; height: 34px; padding: 0 14px 0 12px; border: none; background: none;
+  color: var(--bill-ink); text-decoration: none; }
+.key::before { content: ""; position: absolute; inset: 0; z-index: -1; }   /* 字后面垫一块斜切底子，几块不一样 */
+.key .w { font: 400 25px/1 "Pinyon Script", "Georgia", serif; }
+.key .ico { width: 22px; height: 26px; background: currentColor; -webkit-mask: var(--src) center/contain no-repeat; mask: var(--src) center/contain no-repeat; }
+.key:hover::before { filter: brightness(.92); }
+#street { left: 44px; top: 34px; }
+html[data-bg="bg-standalone"] #street { display: none; }   /* 独立网站还没有街道可回，先不放；接进大场景后再出现 */
+#street::before { background: color-mix(in srgb, var(--bill-ink) 19%, transparent); clip-path: polygon(6% 0, 100% 0, 94% 100%, 0 100%); }
+#keys { position: fixed; right: 46px; top: 34px; display: flex; gap: 12px; z-index: 6; }
+#keys .key { position: relative; }
+#lang { font: 600 13px Cinzel, "Georgia", serif; letter-spacing: .2em; }
+#lang .off { opacity: .45; }
+#sound::before { background: rgba(168, 153, 108, .33); clip-path: polygon(0 0, 94% 0, 100% 100%, 6% 100%); }
+#sound.off { opacity: .5; }
+#stamps { color: var(--bill-cream); padding-right: 16px; }
+#stamps::before { background: var(--bill-ink); clip-path: polygon(6% 0, 100% 0, 100% 100%, 0 100%); }
+#stamps .stamp-ico { width: 18px; height: 22px; }
+#stamps b { font: 600 13px Cinzel, "Georgia", serif; letter-spacing: .1em; }
+#tip-list { position: fixed; right: 46px; top: 78px; z-index: 6; margin: 0; padding: 12px 16px 12px 14px; list-style: none; width: 300px; background: rgba(235, 226, 196, .96);
+  color: var(--bill-ink); font: 500 15px/1.45 "Cormorant Garamond", "Songti SC", serif; border: 1px solid rgba(74, 69, 50, .35); box-shadow: 0 6px 18px rgba(0, 0, 0, .18); }
+#tip-list[hidden] { display: none; }
+#tip-list li.h { margin-top: 6px; font: 600 11px Cinzel, serif; letter-spacing: .2em; }
+#tip-list li.h:first-child { margin-top: 0; }
+#tip-list li.ok { opacity: .55; text-decoration: line-through; }
+#stamp-found { position: fixed; right: 46px; top: 76px; z-index: 6; margin: 0; color: var(--bill-ink); font: italic 500 15px "Cormorant Garamond", serif; transition: opacity .5s; }
+#stamp-found::before { content: ""; display: inline-block; width: 14px; height: 17px; border: 1px dashed var(--bill-ink); vertical-align: -3px; margin-right: 8px; }
+#stamp-found[hidden] { display: none; }
+#tip { position: fixed; left: 50%; top: 40px; transform: translateX(-50%); z-index: 5; margin: 0; white-space: nowrap; color: var(--bill-ink);
+  font: italic 500 18px "Cormorant Garamond", "Songti SC", serif; letter-spacing: .03em; transition: opacity .5s; pointer-events: none; }
+#tip::before, #tip::after { content: ""; display: inline-block; width: 34px; border-top: 1px solid var(--bill-ink); vertical-align: middle; margin: 0 14px; }
+#tip.fade { opacity: 0; }
+
+/* ── 下条：正在放。三格：圆章 | 曲名 + 一句介绍 | 播放器；没歌时播放器那格空着，位置不动 ── */
+#card { position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); z-index: 5; display: grid; grid-template-columns: 124px 340px 320px; column-gap: 34px;
+  align-items: center; color: var(--bill-ink); }
+#card::before { content: ""; position: absolute; left: -120px; right: -120px; top: -40px; bottom: -40px; z-index: -1; pointer-events: none;
+  background: radial-gradient(ellipse at 50% 55%, var(--wash-a) 0%, var(--wash-b) 45%, var(--wash-c) 72%); }
+#card[hidden] { display: none; }
+#card-seal { width: 124px; height: 124px; }
+#card h2 { margin: 0; font: 400 50px/1.1 "Pinyon Script", "Georgia", serif; white-space: nowrap; }
+#card p { margin: 4px 0 0 4px; font: italic 500 15px/1.4 "Cormorant Garamond", "Songti SC", serif; }
+html.zh #card h2 { font: 700 30px/1.3 "Songti SC", "SimSun", serif; letter-spacing: .1em; }
+html.zh #card p { font: 500 14px/1.6 "Songti SC", "SimSun", serif; }
+#spotify { height: 80px; }
+#player { position: fixed; z-index: 7; height: 80px; width: 320px; transition: none; }
 #player.away { left: -9999px !important; top: 0 !important; }
-#player iframe { border-radius: 8px; }
+#player iframe { border-radius: 10px; }
 
 dialog#credits { max-width: 560px; background: #140c0a; color: var(--paper); border: 1px solid #5a4520; padding: 18px 22px; }
 dialog#credits::backdrop { background: rgba(0, 0, 0, .6); }
@@ -74,11 +103,45 @@ dialog#credits h3 { color: var(--gold); margin-top: 0; }
 dialog#credits p { font-size: 13.5px; line-height: 1.6; }
 dialog#credits p.en { color: var(--muted); font-size: 12.5px; }
 #credits-close { background: none; border: 1px solid #5a4520; color: var(--gold); padding: 6px 12px; }
+/* 手机版先不做（用户 11-03） */
 
-@media (max-width: 640px) {
-  #card { left: 12px; right: 12px; bottom: 12px; width: auto; }
-  #acts { top: 12px; }
-  #acts button { padding: 4px 6px; font-size: 12px; }
-  #flip { right: 12px; bottom: auto; top: 12px; }
-  body.acts-open #flip { top: 48px; }
-}
+/* ── 邮票册（album.js，用户 11-03 定稿）：没有底板，细线 + 字 + 一团光晕浮在虚化的画面上 ── */
+#album { position: fixed; inset: 0; z-index: 12; backdrop-filter: blur(7px); -webkit-backdrop-filter: blur(7px); background: rgba(203,191,151,.25); opacity: 0; transition: opacity .3s; color: var(--bill-ink); }
+html:not([data-bg="bg-standalone"]) #album { background: rgba(18,13,9,.45); }
+#album.on { opacity: 1; }
+#album .al-box { position: absolute; left: 50%; top: 50%; width: 1000px; height: 620px; }
+#album .al-box::before { content: ""; position: absolute; left: -60px; right: -60px; top: -20px; bottom: -20px; pointer-events: none;
+  background: radial-gradient(ellipse at 50% 50%, var(--wash-a) 0%, var(--wash-b) 45%, var(--wash-c) 72%); }
+#album .al-box > div { position: absolute; }
+#album .al-t { transform: translateX(-50%); white-space: nowrap; text-align: center; }
+#album .al-small { font: 600 11px Cinzel, Georgia, serif; letter-spacing: .5em; padding-left: .5em; }
+#album .al-big { font: 400 64px/1.1 "Pinyon Script", Georgia, serif; }
+html.zh #album .al-big { font: 700 40px/1.6 "Songti SC", "SimSun", serif; letter-spacing: .2em; }
+#album .al-it { font: italic 500 17px "Cormorant Garamond", "Songti SC", serif; }
+#album .al-line { display: inline-block; width: 34px; border-top: 1px solid currentColor; vertical-align: middle; margin: 0 14px; }
+#album .al-rule { display: inline-block; width: 150px; border-top: 1px solid currentColor; vertical-align: middle; }
+#album .al-dia { display: inline-block; width: 7px; height: 7px; border: 1px solid currentColor; transform: rotate(45deg); margin: 0 12px; vertical-align: middle; }
+#album .al-close { display: flex; align-items: center; gap: 8px; font: 400 22px/1 "Pinyon Script", Georgia, serif; cursor: pointer; }
+html.zh #album .al-close { font: 500 14px "Songti SC", serif; letter-spacing: .2em; }
+#album .al-close i { position: relative; width: 14px; height: 14px; }
+#album .al-close i::before, #album .al-close i::after { content: ""; position: absolute; left: 6.5px; top: -1px; width: 1.2px; height: 16px; background: currentColor; transform: rotate(45deg); }
+#album .al-close i::after { transform: rotate(-45deg); }
+#album .al-stamp { width: 104px; height: 130px; }
+#album .al-stamp .perf { position: absolute; inset: 0; background: radial-gradient(circle at 5px 5px, transparent 2.8px, #f8f2df 3.3px) -5px -5px / 10px 10px; filter: drop-shadow(1px 2px 2px rgba(40,30,10,.25)); }
+#album .al-stamp .img { position: absolute; inset: 7px; background-size: cover; background-position: center; }
+#album .al-stamp svg.pm { position: absolute; width: 76px; height: 76px; right: -26px; top: -18px; transform: rotate(-12deg); }
+#album .al-stamp.ghost { border: 1px dashed currentColor; opacity: .85; }
+#album .al-stamp.ghost .perf { display: none; }
+#album .al-stamp.ghost .img { inset: 10px; filter: grayscale(1) sepia(.5); opacity: .16; -webkit-mask: radial-gradient(ellipse 70% 70% at 50% 50%, #000 50%, transparent 100%); mask: radial-gradient(ellipse 70% 70% at 50% 50%, #000 50%, transparent 100%); }
+#album .al-cap { width: 150px; text-align: center; font: italic 500 16px/1.25 "Cormorant Garamond", "Songti SC", serif; }
+#album .al-cap small { display: block; margin-top: 3px; font: 600 9px Cinzel, "Songti SC", serif; font-style: normal; letter-spacing: .25em; opacity: .7; }
+#album .al-cap.h { opacity: .75; }
+#album .al-tk { width: 214px; height: 84px; }
+#album .tk-svg { position: absolute; left: -4px; top: -4px; overflow: visible; }
+#album .al-tk-t { position: absolute; left: 0; top: 0; width: 160px; height: 84px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; }
+#album .al-tk-t b { font: 600 9px/1 Cinzel, "Songti SC", serif; letter-spacing: .32em; padding-left: .32em; }
+#album .al-tk-t span { font: italic 500 21px/1 "Cormorant Garamond", "Songti SC", serif; white-space: nowrap; }
+#album .al-tk-t span.long { font-size: 17px; }
+html.zh #album .al-tk-t span { font-style: normal; font-weight: 600; font-size: 19px; letter-spacing: .08em; }
+html.zh #album .al-tk-t span.long { font-size: 15px; letter-spacing: 0; }
+html.zh #album .al-it, html.zh #album .al-cap { font-style: normal; }

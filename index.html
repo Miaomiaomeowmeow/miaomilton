@@ -16,6 +16,8 @@
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pinyon+Script&family=Cormorant+Garamond:ital,wght@0,500;1,500&family=Cinzel:wght@400;600&display=swap">
 <link rel="stylesheet" href="style.css">
 <link rel="modulepreload" href="./vendor/build/three.core.js">
 <link rel="modulepreload" href="./vendor/build/three.module.js">
@@ -27,29 +29,80 @@
 <body>
 <canvas id="scene" aria-label="A ten-dollar bill. Drag to tilt, click the pictures on it · 一张 10 美元钞票。拖动倾斜，点上面的图案" tabindex="0"></canvas>
 
-<div id="loading" aria-live="polite">
-  <div class="load-title"><b class="l-en">Miaomilton<span>喵密尔顿 · a $10 bill that stages Hamilton</span></b><b class="l-zh">喵密尔顿<span>MIAOMILTON</span></b></div>
-  <div class="load-track"><i id="load-bar"></i></div>
+<!-- 加载动画 = 印钞机（用户 11-03 定）：空白钞票纸从雕版滚筒底下过，印到哪 = 加载到哪；编号就是百分比；印完钞票被拿起来，接着开场 -->
+<div id="loading" aria-live="polite" aria-label="Loading · 加载中">
+  <div id="ld">
+    <div id="ld-sheet"><div id="ld-print"></div><div id="ld-wet"></div></div>
+    <div id="ld-roller"><img src="./assets/loader-roller.webp" alt=""><canvas id="ld-drum" width="174" height="668"></canvas><img class="wh" src="./assets/loader-wheel0.webp" style="top:78px" alt=""><img class="wh" src="./assets/loader-wheel1.webp" style="top:474px" alt=""></div>
+    <div id="ld-count"><div class="no">QD <span id="ld-num">00000000</span> A</div><div class="cap">printing your ten dollars</div></div>
+  </div>
 </div>
+<script>
+// 加载动画：先于 three.js 跑起来（普通脚本，不等模块）。main.js 调 __loader.to(0~1) 报进度、__loader.done(cb) 收尾
+(() => {
+  const $ = s => document.querySelector(s), W = 760, L = 120;   // 纸从 #ld 左边 120 开始，宽 760
+  const drum = $('#ld-drum'), g = drum.getContext('2d'), tex = new Image(); tex.src = './assets/loader-drum.webp';
+  const wheels = [...document.querySelectorAll('#ld-roller .wh')];
+  function drawDrum(dist) {   // 滚筒表面：每一竖列 = 圆柱上一个角度，按 asin 展开；转的角度 = 走过的距离 / 半径（不打滑）
+    if (!tex.complete || !tex.naturalWidth) return;
+    const TW = tex.naturalWidth, TH = tex.naturalHeight, DW = 174, DH = 668, R = DW / 2, k = TH / DH;
+    g.clearRect(0, 0, DW, DH);
+    for (let c = 0; c < DW; c++) {
+      const u = (c + .5) / R - 1, th = Math.asin(Math.max(-1, Math.min(1, u))), tx = (((th * R + dist * 2) * k) % TW + TW) % TW;
+      g.drawImage(tex, tx, 0, 1, TH, c, 0, 1, DH);
+      g.fillStyle = `rgba(20,16,8,${(.55 * (1 - Math.cos(th))).toFixed(3)})`; g.fillRect(c, 0, 1, DH);   // 圆柱明暗：两边暗
+      if (u > -.55 && u < -.25) { g.fillStyle = `rgba(255,246,220,${(.18 * (1 - Math.abs(u + .4) / .15)).toFixed(3)})`; g.fillRect(c, 0, 1, DH); }   // 左上来光的一条高光
+    }
+  }
+  let shown = 0, target = 0, t0 = performance.now(), onDone = null, raf = 0;
+  function set(p) {
+    const x = L + W * p;
+    $('#ld-print').style.clipPath = `inset(0 ${(1 - p) * 100}% 0 0)`;
+    $('#ld-wet').style.left = (W * p - 160) + 'px';
+    $('#ld-roller').style.left = x + 'px'; drawDrum(W * p);
+    wheels.forEach(w => w.style.transform = `rotate(${W * p * 1.6}deg)`);
+    $('#ld-num').textContent = String(Math.round(p * 100)).padStart(8, '0');
+  }
+  function tick(now) {   // 显示的进度慢慢追真实进度：起步慢、收尾慢，最少印 2 秒，不会一闪而过
+    const cap = Math.min(1, (now - t0) / 2000), want = Math.min(target, cap);
+    shown += (want - shown) * .06 + (want > shown ? .0015 : 0); if (shown > want) shown = want;
+    set(shown);
+    if (onDone && shown >= .999) { set(1); $('#loading').classList.add('printed'); $('#ld-count .cap').textContent = 'ready'; const cb = onDone; onDone = null; setTimeout(cb, 900); return; }
+    raf = requestAnimationFrame(tick);
+  }
+  function fit() { const s = Math.min(innerWidth / 1100, innerHeight / 720); $('#ld').style.transform = `translate(-50%,-50%) scale(${s})`; }
+  fit(); addEventListener('resize', fit); tex.onload = () => drawDrum(0); raf = requestAnimationFrame(tick);
+  window.__loader = { to(p) { target = Math.max(target, p); }, done(cb) { target = 1; onDone = cb; } };
+})();
+</script>
 
 
 
 <!-- 用户 10-23：先不放标题、品牌字、版权按钮这类 HTML 字；按钮做少做小，等全站统一样式 -->
-<button id="flip" type="button" aria-label="翻面 · Flip" title="翻面 · Flip">⟲</button>
-<button id="clap" type="button" hidden aria-label="鼓掌 · Applaud" title="鼓掌 · Applaud">👏</button>
+<!-- 界面固定分区（用户 11-03 定稿）：上条 = 小键 + 舞台提示，下条 = 正在放的节目单，中间整块留给 3D -->
+<button id="flip" type="button" aria-label="翻面 · Flip" hidden></button>   <!-- 翻面只在钞票卷角上（一个功能一个地方），这个键留给键盘 -->
+<button id="clap" type="button" hidden aria-label="鼓掌 · Applaud"></button>   <!-- 鼓掌 = 点舞台任意处，这个键不显示 -->
 <p id="hint" class="sr" role="status"></p>
-<div id="tip" hidden><p id="tip-now" role="status"></p><button id="tip-toggle" type="button" aria-expanded="false"></button><ul id="tip-list" hidden></ul></div>   <!-- 提示纸条：上面一句现在能做什么（一直在），下面彩蛋清单（样式等全站界面定了再统一） -->
 <nav id="acts" aria-label="主线三幕" hidden></nav>
+<div id="hud" hidden>
+  <svg id="corners" aria-hidden="true"></svg>
+  <a id="street" class="key" href="../"><i class="ico" style="--src:url(./assets/ui-back.png)"></i><span class="w">Street</span></a>
+  <div id="keys">
+    <button id="lang" class="key" type="button"></button>
+    <button id="sound" class="key" type="button"><i class="ico" style="--src:url(./assets/ui-sound.png)"></i><span class="w">Sound</span></button>
+    <button id="stamps" class="key" type="button" aria-expanded="false"><svg class="stamp-ico" viewBox="0 0 18 22" aria-hidden="true"><rect x=".5" y=".5" width="17" height="21" fill="none" stroke="currentColor" stroke-dasharray="1.5 2.2"/><rect x="3.5" y="3.5" width="11" height="15" fill="none" stroke="currentColor" stroke-width=".7"/><path d="M5 15 l4 -6 l3 3 l2 -4" fill="none" stroke="currentColor" stroke-width=".8"/></svg><span class="w">Stamps</span> <b id="stamp-n">0/5</b></button>
+  </div>
+  <ul id="tip-list" hidden></ul>
+  <p id="stamp-found" hidden></p>
+  <p id="tip"><span id="tip-now" role="status"></span></p>
+</div>
 
-<section id="card" hidden aria-live="polite">
-  <button id="card-close" type="button" aria-label="关上">×</button>
-  <div class="kind" id="card-kind"></div>
-  <h2 id="card-zh"></h2>
-  <button id="card-more" type="button" aria-expanded="false"></button>   <!-- 窄窗口：说明卡先收成一行，点它展开（不挡画面） -->
-  <div class="en-title" id="card-en"></div>
-  <p id="card-line"></p>
-  <p class="en" id="card-line-en"></p>
+<section id="card" aria-live="polite">
+  <button id="card-close" class="sr" type="button" aria-label="关上">×</button>
+  <svg id="card-seal" viewBox="0 0 124 124" aria-hidden="true"></svg>
+  <div class="txt"><h2 id="card-title"></h2><p id="card-line"></p></div>
   <div id="spotify"></div>
+  <button id="card-more" type="button" aria-expanded="false" hidden></button>
 </section>
 <div id="player" class="away"><div id="spotify-frame"></div></div>
 

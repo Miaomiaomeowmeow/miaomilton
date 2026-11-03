@@ -885,30 +885,31 @@ function baseTip() {   // 上条正中的提示（用户 11-03：写全，做过
 let scratched = (() => { try { return sessionStorage.getItem('ham-scratched') === '1'; } catch (e) { return false; } })();
 const scratch = document.createElement('canvas'); scratch.id = 'scratch'; scratch.setAttribute('aria-label', 'Hint · scratch to reveal');
 let scratchReady = false, scratchW = 0, scratchH = 0, scratchBase = 0;
-function paintCoat() {   // 刮刮层：跟钞票一套的旧金色油墨，边缘像手刷的、不规则，带几道雕版细纹（用户 11-03：灰色长方块跟背景不融）
+function paintCoat() {   // 刮刮层：银色刮刮胶（用户 11-03：金色那版不像刮刮乐，银色更好；只是边缘要自然）——边稍软、带一点起伏，不加阴影
   const g = scratch.getContext('2d'), W = scratch.width, H = scratch.height, dpr = W / scratchW;
   g.globalCompositeOperation = 'source-over'; g.clearRect(0, 0, W, H);
-  const pad = 6 * dpr, rough = (i, n, amp) => amp * (Math.sin(i * 1.7) * .5 + Math.sin(i * .37 + 1) * .35 + Math.sin(i * 4.1) * .15);
-  g.beginPath(); const N = 60;
-  for (let i = 0; i <= N; i++) { const x = pad + (W - 2 * pad) * i / N; g[i ? 'lineTo' : 'moveTo'](x, pad + rough(i, N, 3 * dpr)); }
-  for (let i = 0; i <= 8; i++) g.lineTo(W - pad + rough(i + 70, 8, 4 * dpr), pad + (H - 2 * pad) * i / 8);
-  for (let i = N; i >= 0; i--) { const x = pad + (W - 2 * pad) * i / N; g.lineTo(x, H - pad + rough(i + 30, N, 3 * dpr)); }
-  for (let i = 8; i >= 0; i--) g.lineTo(pad + rough(i + 90, 8, 4 * dpr), pad + (H - 2 * pad) * i / 8);
-  g.closePath();
-  const grd = g.createLinearGradient(0, 0, W, 0); grd.addColorStop(0, 'rgba(176,150,92,0)'); grd.addColorStop(.06, '#b8a06a'); grd.addColorStop(.5, '#cdb985'); grd.addColorStop(.94, '#b39b64'); grd.addColorStop(1, 'rgba(176,150,92,0)');
-  g.fillStyle = grd; g.fill(); g.save(); g.clip();
-  g.strokeStyle = 'rgba(74,69,50,.22)'; g.lineWidth = .6 * dpr;   // 几道波浪雕版纹
-  for (let k = 0; k < 7; k++) { g.beginPath(); for (let x = 0; x <= W; x += 3 * dpr) { const y = H * (.18 + k * .11) + 2.2 * dpr * Math.sin(x / (9 * dpr) + k); x ? g.lineTo(x, y) : g.moveTo(x, y); } g.stroke(); }
-  for (let i = 0; i < W * H / 50; i++) { g.fillStyle = `rgba(${Math.random() < .5 ? '255,248,225' : '70,60,35'},${Math.random() * .14})`; g.fillRect(Math.random() * W, Math.random() * H, dpr, dpr); }
+  const pad = 3 * dpr, R = 5 * dpr, wob = i => 1.1 * dpr * (Math.sin(i * 2.3) * .6 + Math.sin(i * .7 + 2) * .4);
+  g.beginPath(); const N = 48;
+  for (let i = 0; i <= N; i++) { const x = pad + R + (W - 2 * pad - 2 * R) * i / N; g[i ? 'lineTo' : 'moveTo'](x, pad + wob(i)); }
+  g.quadraticCurveTo(W - pad, pad, W - pad, pad + R);
+  for (let i = 0; i <= 6; i++) g.lineTo(W - pad + wob(i + 60), pad + R + (H - 2 * pad - 2 * R) * i / 6);
+  g.quadraticCurveTo(W - pad, H - pad, W - pad - R, H - pad);
+  for (let i = N; i >= 0; i--) { const x = pad + R + (W - 2 * pad - 2 * R) * i / N; g.lineTo(x, H - pad + wob(i + 30)); }
+  g.quadraticCurveTo(pad, H - pad, pad, H - pad - R);
+  for (let i = 6; i >= 0; i--) g.lineTo(pad + wob(i + 80), pad + R + (H - 2 * pad - 2 * R) * i / 6);
+  g.quadraticCurveTo(pad, pad, pad + R, pad); g.closePath();
+  const grd = g.createLinearGradient(0, 0, W, H); grd.addColorStop(0, '#b9b6ab'); grd.addColorStop(.42, '#e2dfd6'); grd.addColorStop(.55, '#cdcac0'); grd.addColorStop(1, '#a8a497');
+  g.filter = `blur(${.6 * dpr}px)`; g.fillStyle = grd; g.fill(); g.filter = 'none';   // 边缘稍微软一点
+  g.save(); g.clip();
+  for (let i = 0; i < W * H / 40; i++) { g.fillStyle = `rgba(${Math.random() < .5 ? '255,255,255' : '60,55,40'},${Math.random() * .12})`; g.fillRect(Math.random() * W, Math.random() * H, dpr, dpr); }   // 细颗粒，像真的刮刮银
   g.restore();
-  g.fillStyle = '#3f3a28'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillStyle = '#4a4532'; g.textAlign = 'center'; g.textBaseline = 'middle';
   g.font = `600 ${11 * dpr}px Cinzel, Georgia, serif`; g.letterSpacing = `${3 * dpr}px`;
   g.fillText(L1('要提示吗？刮一下', 'NEED A HINT? · SCRATCH HERE'), W / 2, H / 2 + dpr);
-  scratchBase = clearRatio();   // 毛边外本来就是透明的，刮开多少要减掉这一圈
-}
-function placeScratch() {   // 盖在提示那一行上，大小跟着提示变
-  if (scratched) { scratch.remove(); return; }
-  const tip = $('#tip'); if (!scratch.parentNode) tip.appendChild(scratch);
+  scratchBase = clearRatio();   // 边外本来就是透明的，刮开多少要减掉这一圈
+}function placeScratch() {   // 盖在提示那一行上，大小跟着提示变
+  if (scratched) { scratch.remove(); $('#tip').classList.remove('covered'); return; }
+  const tip = $('#tip'); if (!scratch.parentNode) tip.appendChild(scratch); tip.classList.add('covered');   // 没刮开时，提示后面那层淡光先藏起来，免得露出一圈浅色方块
   const r = tip.getBoundingClientRect(), w = Math.min(Math.max(380, r.width), 560), h = Math.max(40, r.height + 12);
   if (scratchReady && Math.abs(w - scratchW) < 2 && Math.abs(h - scratchH) < 2) return;
   const dpr = Math.min(devicePixelRatio || 1, 2); scratchW = w; scratchH = h; scratch.width = w * dpr; scratch.height = h * dpr;
@@ -925,7 +926,7 @@ function scratchAt(e) {
 }
 function clearRatio() { const d = scratch.getContext('2d').getImageData(0, 0, scratch.width, scratch.height).data; let c = 0; for (let i = 3; i < d.length; i += 32) if (d[i] < 40) c++; return c / (d.length / 32); }
 function checkScratch() {   // 刮掉的（减去毛边外本来就透明的那圈）够多了就整条揭开
-  if (clearRatio() - scratchBase > .18) { scratched = true; try { sessionStorage.setItem('ham-scratched', '1'); } catch (er) {} scratch.classList.add('gone'); setTimeout(() => scratch.remove(), 400); }   // 刮一小片就整条揭开（用户 11-03：不用完全刮开）
+  if (clearRatio() - scratchBase > .18) { scratched = true; try { sessionStorage.setItem('ham-scratched', '1'); } catch (er) {} scratch.classList.add('gone'); $('#tip').classList.remove('covered'); setTimeout(() => scratch.remove(), 400); }   // 刮一小片就整条揭开（用户 11-03：不用完全刮开）
 }
 scratch.addEventListener('pointerdown', e => { scratching = true; scratch.setPointerCapture(e.pointerId); scratchAt(e); });
 scratch.addEventListener('pointermove', e => { if (scratching || e.pointerType === 'mouse') scratchAt(e); });   // 鼠标划过就刮（像用硬币在上面蹭），不一定要按住

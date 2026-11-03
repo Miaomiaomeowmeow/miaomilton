@@ -179,3 +179,4 @@ html:not([data-bg="bg-standalone"]) #quote { display: none; }   /* 街上版背�
 #ad .ad-fine { margin-top: 26px; font: 500 11px Cinzel, "Songti SC", serif; letter-spacing: .2em; opacity: .65; }
 html.zh #ad .ad-line, html.zh #ad .ad-replay { font-style: normal; }
 #tip { user-select: none; -webkit-user-select: none; }   /* 刮的时候别把字选成蓝色 */
+#tip.covered { background: none; text-shadow: none; }   /* 刮刮条盖着时不垫淡光 */

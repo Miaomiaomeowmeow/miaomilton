@@ -78,8 +78,8 @@ html[data-bg="bg-standalone"] #street { display: none; }   /* 独立网站还没
 #stamp-found[hidden] { display: none; }
 #tip { position: fixed; left: 50%; top: 40px; transform: translateX(-50%); z-index: 5; margin: 0; white-space: nowrap; color: var(--bill-ink);
   font: italic 600 18px "Cormorant Garamond", "Songti SC", serif; letter-spacing: .02em; transition: opacity .5s; pointer-events: none;
-  padding: 4px 26px; background: radial-gradient(ellipse at 50% 50%, var(--wash-a) 0%, var(--wash-b) 55%, var(--wash-c) 80%);
-  text-shadow: 0 0 6px var(--wash-a), 0 0 2px var(--wash-a); }   /* 11-03：最上面那行提示看不清 → 大一点、粗一点、后面垫一层淡光 */
+  padding: 4px 26px;   /* 不垫白色淡光（用户 11-03：第二次进来还看到那层白光） */
+  text-shadow: none; }   /* 11-03：最上面那行提示看不清 → 大一点、粗一点、后面垫一层淡光 */
 #tip::before, #tip::after { content: ""; display: inline-block; width: 34px; border-top: 1px solid var(--bill-ink); vertical-align: middle; margin: 0 14px; }
 #tip.fade { opacity: 0; }
 
@@ -183,3 +183,4 @@ html.zh #ad .ad-line, html.zh #ad .ad-replay { font-style: normal; }
 #scratch.scraped { pointer-events: none; }   /* 刮开以后留着刮痕，不挡点击 */
 #tip.open #tip-now { position: relative; z-index: 1; }   /* 刮开以后，字压在银屑上面 */
 #tip #scratch.scraped { z-index: 0; }
+#tip { width: 560px; max-width: 560px; height: 56px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; }   /* 提示条大小固定，不跟着字多字少变（用户 11-03） */

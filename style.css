@@ -21,7 +21,7 @@ canvas#scene { position: fixed; inset: 0; width: 100%; height: 100%; display: bl
 button { font: inherit; color: inherit; cursor: pointer; }
 
 /* 加载动画 · 印钞机（用户 11-03 定） */
-#loading { position: fixed; inset: 0; z-index: 20; overflow: hidden; transition: opacity .7s; background: #cbbf97; }
+#loading { position: fixed; inset: 0; z-index: 20; overflow: hidden; transition: opacity .45s; background: #cbbf97; }
 html:not([data-bg="bg-standalone"]) #loading { background: #1a1510 url(./assets/street-blur.webp) center/cover; }
 html[data-bg="bg-standalone"] #loading { background: #cbbf97 url(./assets/bg-standalone.webp?v=1103) center/cover; }
 #loading::before { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 48%, rgba(236,228,200,.8), rgba(222,210,172,.55) 60%, rgba(200,186,146,.35)); }
@@ -180,3 +180,6 @@ html:not([data-bg="bg-standalone"]) #quote { display: none; }   /* 街上版背�
 html.zh #ad .ad-line, html.zh #ad .ad-replay { font-style: normal; }
 #tip { user-select: none; -webkit-user-select: none; }   /* 刮的时候别把字选成蓝色 */
 #tip.covered { background: none; text-shadow: none; }   /* 刮刮条盖着时不垫淡光 */
+#scratch.scraped { pointer-events: none; }   /* 刮开以后留着刮痕，不挡点击 */
+#tip.open #tip-now { position: relative; z-index: 1; }   /* 刮开以后，字压在银屑上面 */
+#tip #scratch.scraped { z-index: 0; }

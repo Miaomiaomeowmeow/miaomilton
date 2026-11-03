@@ -251,7 +251,8 @@ async function boot() {
   const reveal = () => {   // 印完、钞票被拿起来以后，加载层淡出，桌上那张钞票接着落下来
     $('#loading').classList.add('gone'); setTimeout(() => { $('#loading').style.display = 'none'; }, 800);   // 淡出后直接拿掉，免得有的浏览器停在半透明
     $('#hud').hidden = false; drawCorners(); renderCard();   // 上条、四个角、下条（钞票本身的内容）
-    state.phase = 'drop'; state.t0 = performance.now(); wake();
+    uniforms.uFold1.value = uniforms.uFold2.value = 0; pivot.position.set(0, 0, 0); pivot.rotation.z = 0;   // 印好的钞票就是这张：不再折起来再展开（用户 11-03）
+    state.phase = 'print'; state.t0 = performance.now(); wake();
   };
   if (window.__loader) window.__loader.done(reveal); else reveal();
 }
@@ -359,6 +360,12 @@ function draw() {
   last = now;
   let busy = false;
   uniforms.uTime.value = now / 1000;
+  if (state.phase === 'print') {   // 从印刷台正上方看的那张，镜头转个角度，变成我们展示的钞票（接加载动画，用户 11-03：直接、丝滑）
+    const t = clamp01((now - state.t0) / 1500), e = ease(t);
+    camera.position.set(0, 3.6, .02).lerp(VIEW.bill.pos, e); camera.fov = VIEW.bill.fov; camera.lookAt(LOOK); camera.updateProjectionMatrix();
+    if (t >= 1) { state.phase = 'idle'; state.hintT = now; aimCamera(); mark('unfolded'); setHint(); refreshTip(true); setTimeout(loadSpotify, 900); setTimeout(loadStage, 300); }
+    busy = true;
+  }
   if (state.phase === 'drop') {   // 折着的钞票落到桌上 → 先打开第二折 → 再打开第一折
     const t = now - state.t0;
     const d = clamp01(t / 700), u2 = clamp01((t - 800) / 750), u1 = clamp01((t - 1300) / 950);   // 两次展开接上，别停在对折露半张背面的样子（评估 10-25：像坏掉的钞票）
@@ -766,7 +773,7 @@ function drawSeal(num, ring, img) {   // 照真钞印章：外圈锯齿 → 一�
   for (let i = 0; i <= 144; i++) { const t = i / 144 * 2 * Math.PI, r = i % 2 ? R - 4 : R; teeth += (i ? 'L' : 'M') + (cx + r * Math.cos(t)).toFixed(1) + ' ' + (cx + r * Math.sin(t)).toFixed(1); }
   const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
   const cs = getComputedStyle(document.documentElement), INK = cs.getPropertyValue('--bill-ink').trim() || '#4a4532', PAPER = cs.getPropertyValue('--bill-paper').trim() || '#ebe2c4';   // 街上版深色、独立网站米黄，颜色跟着 CSS 走
-  $('#card-seal').innerHTML = `<path d="${teeth}Z" fill="${PAPER}" stroke="${INK}" stroke-width=".8"/><circle cx="${cx}" cy="${cx}" r="${R - 7}" fill="none" stroke="${INK}"/>`
+  $('#card-seal').innerHTML = `<path d="${teeth}Z" fill="none" stroke="${INK}" stroke-width=".8"/><circle cx="${cx}" cy="${cx}" r="${R - 7}" fill="none" stroke="${INK}"/>`
     + `<path id="seal-ring" d="M${cx - rr} ${cx} a${rr} ${rr} 0 1 1 ${2 * rr} 0 a${rr} ${rr} 0 1 1 ${-2 * rr} 0" fill="none"/>`
     + `<text font-family="Cinzel, Songti SC, serif" font-weight="600" font-size="9.5" fill="${INK}"><textPath href="#seal-ring" textLength="${(2 * Math.PI * rr - 4).toFixed(1)}" lengthAdjust="spacing">${esc(ring)}</textPath></text>`
     + `<circle cx="${cx}" cy="${cx}" r="${R - 24}" fill="none" stroke="${INK}" stroke-width=".9"/><circle cx="${cx}" cy="${cx}" r="${R - 27}" fill="none" stroke="${INK}" stroke-width=".4"/>`
@@ -876,10 +883,10 @@ function baseTip() {   // 上条正中的提示（用户 11-03：写全，做过
     return state.endShown ? [`演完了${SEP}${fold[0]}，再点金星`, `the show is over${SEP}${fold[1]}, then the gold star`] : [`演完了${SEP}${fold[0]}`, `the show is over${SEP}${fold[1]}`];
   }
   if (state.endShown) return ['都找到了 · 点钞票正中的金星，折成一颗星', 'all found · click the gold star to fold the note'];
-  if (state.flipTo) return [`找一找：${X(f.watermark, '对着光看左边的水印')}、${X(f.treasury, '财政部大楼')}${SEP}点弯下来的角，翻回正面`,
-    `find ${X(f.watermark, 'the watermark (hold it to the light)')}, ${X(f.treasury, 'the building')}${SEP}the bent corner flips it back`];
-  return [`${X(allActs, '点头像开场')}${SEP}找一找：${X(f.torch, '火炬')}、${X(f.people, 'We the People')}、${X(f.ten, '会变色的 10')}${SEP}点卷起的角，翻到背面`,
-    `${X(allActs, 'click the portrait to begin')}${SEP}find ${X(f.torch, 'the torch')}, ${X(f.people, 'We the People')}, ${X(f.ten, 'the shifting 10')}${SEP}the curled corner flips the note`];
+  if (state.flipTo) return [`${X(f.watermark, '找：对着光看左边的水印')}${SEP}${X(f.treasury, '找：财政部大楼')}${SEP}点弯下来的角，翻回正面`,   // 做过的整句划掉（用户 11-03：find the torch 三个词一起划）
+    `${X(f.watermark, 'find the watermark (hold it to the light)')}${SEP}${X(f.treasury, 'find the building')}${SEP}the bent corner flips it back`];
+  return [`${X(allActs, '点头像开场')}${SEP}${X(f.torch, '找火炬')}${SEP}${X(f.people, '找 We the People')}${SEP}${X(f.ten, '找会变色的 10')}${SEP}点卷起的角，翻到背面`,
+    `${X(allActs, 'click the portrait to begin')}${SEP}${X(f.torch, 'find the torch')}${SEP}${X(f.people, 'find We the People')}${SEP}${X(f.ten, 'find the shifting 10')}${SEP}the curled corner flips the note`];
 }
 // 刮刮条（用户 11-03）：提示一开始盖着一层银灰，写「要提示吗？刮开看看」；拖鼠标 / 手指划过就刮掉，刮开一半就整条揭开，之后一直开着
 let scratched = (() => { try { return sessionStorage.getItem('ham-scratched') === '1'; } catch (e) { return false; } })();
@@ -907,13 +914,14 @@ function paintCoat() {   // 刮刮层：银色刮刮胶（用户 11-03：金色�
   g.font = `600 ${11 * dpr}px Cinzel, Georgia, serif`; g.letterSpacing = `${3 * dpr}px`;
   g.fillText(L1('要提示吗？刮一下', 'NEED A HINT? · SCRATCH HERE'), W / 2, H / 2 + dpr);
   scratchBase = clearRatio();   // 边外本来就是透明的，刮开多少要减掉这一圈
-}function placeScratch() {   // 盖在提示那一行上，大小跟着提示变
-  if (scratched) { scratch.remove(); $('#tip').classList.remove('covered'); return; }
-  const tip = $('#tip'); if (!scratch.parentNode) tip.appendChild(scratch); tip.classList.add('covered');   // 没刮开时，提示后面那层淡光先藏起来，免得露出一圈浅色方块
+}
+function placeScratch() {   // 盖在提示那一行上，大小跟着提示变
+  const tip = $('#tip'); if (!scratch.parentNode) tip.appendChild(scratch); tip.classList.add('covered');   // 提示后面不垫淡光（刮开以后也不垫，用户 11-03），刮痕就是底
+  if (scratched && !scratch.classList.contains('scraped')) scratchReady = false;   // 这次访问早就刮开过：重画成刮开的样子
   const r = tip.getBoundingClientRect(), w = Math.min(Math.max(380, r.width), 560), h = Math.max(40, r.height + 12);
   if (scratchReady && Math.abs(w - scratchW) < 2 && Math.abs(h - scratchH) < 2) return;
-  const dpr = Math.min(devicePixelRatio || 1, 2); scratchW = w; scratchH = h; scratch.width = w * dpr; scratch.height = h * dpr;
-  scratch.style.width = w + 'px'; scratch.style.height = h + 'px'; scratch.style.left = ((r.width - w) / 2) + 'px'; scratch.style.top = '-6px'; scratchReady = true; paintCoat();
+  const dpr = Math.min(devicePixelRatio || 1, 2); scratchW = w; scratchH = h; const wasScraped = scratched; scratch.width = w * dpr; scratch.height = h * dpr;
+  scratch.style.width = w + 'px'; scratch.style.height = h + 'px'; scratch.style.left = ((r.width - w) / 2) + 'px'; scratch.style.top = '-6px'; scratchReady = true; paintCoat(); if (wasScraped) scrapeOpen();
 }
 let scratching = false, scratchCount = 0, lastScratch = null;
 function scratchAt(e) {
@@ -924,9 +932,19 @@ function scratchAt(e) {
   if (++scratchCount % 6) return;
   checkScratch();
 }
-function clearRatio() { const d = scratch.getContext('2d').getImageData(0, 0, scratch.width, scratch.height).data; let c = 0; for (let i = 3; i < d.length; i += 32) if (d[i] < 40) c++; return c / (d.length / 32); }
+function scrapeOpen() {   // 揭开：不整条消失，像真刮过——中间刮出字来，上下边和两头留一些银色碎屑（用户 11-03：要有被刮开的质感，不要那层淡光）
+  const g = scratch.getContext('2d'), W = scratch.width, H = scratch.height;
+  g.globalCompositeOperation = 'destination-out'; g.lineCap = 'round';
+  for (let k = 0; k < 14; k++) {   // 一道一道横着刮，长短、粗细、高低都不一样，边上就会剩下毛毛的银边
+    const y = H * (.32 + .36 * Math.random()), x0 = W * (.05 + Math.random() * .07), x1 = W * (.88 + Math.random() * .07);
+    g.lineWidth = H * (.28 + Math.random() * .22); g.beginPath(); g.moveTo(x0, y); g.lineTo(x1, y + (Math.random() - .5) * H * .18); g.stroke();
+  }
+  g.lineWidth = H * .62; g.beginPath(); g.moveTo(W * .1, H / 2); g.lineTo(W * .9, H / 2); g.stroke();   // 字那一带一定刮干净
+  g.globalCompositeOperation = 'destination-in'; g.fillStyle = 'rgba(0,0,0,.85)'; g.fillRect(0, 0, W, H);   // 剩下的银屑淡一点，不抢字
+  scratch.classList.add('scraped'); $('#tip').classList.add('open'); lastScratch = null;
+}function clearRatio() { const d = scratch.getContext('2d').getImageData(0, 0, scratch.width, scratch.height).data; let c = 0; for (let i = 3; i < d.length; i += 32) if (d[i] < 40) c++; return c / (d.length / 32); }
 function checkScratch() {   // 刮掉的（减去毛边外本来就透明的那圈）够多了就整条揭开
-  if (clearRatio() - scratchBase > .18) { scratched = true; try { sessionStorage.setItem('ham-scratched', '1'); } catch (er) {} scratch.classList.add('gone'); $('#tip').classList.remove('covered'); setTimeout(() => scratch.remove(), 400); }   // 刮一小片就整条揭开（用户 11-03：不用完全刮开）
+  if (clearRatio() - scratchBase > .18) { scratched = true; try { sessionStorage.setItem('ham-scratched', '1'); } catch (er) {} scrapeOpen(); }   // 刮一小片就整条揭开（用户 11-03：不用完全刮开）
 }
 scratch.addEventListener('pointerdown', e => { scratching = true; scratch.setPointerCapture(e.pointerId); scratchAt(e); });
 scratch.addEventListener('pointermove', e => { if (scratching || e.pointerType === 'mouse') scratchAt(e); });   // 鼠标划过就刮（像用硬币在上面蹭），不一定要按住

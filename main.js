@@ -212,6 +212,11 @@ function placeCamera() {
   aimCamera();
 }
 const camLook = new THREE.Vector3(), tmpV = new THREE.Vector3(), camEnd = new THREE.Vector3();
+function printCam(e) {   // 开场镜头：从印刷台几乎正上方（留一点点斜，避开正对下方时镜头会翻转），按仰角平滑转到展示角度
+  const end = VIEW.bill.pos.clone().sub(LOOK), r = end.length(), a0 = 1.45, a1 = Math.asin(end.y / r), a = a0 + (a1 - a0) * e;
+  camera.position.set(LOOK.x, LOOK.y + r * Math.sin(a), LOOK.z + r * Math.cos(a)); camera.fov = VIEW.bill.fov; camera.up.set(0, 1, 0); camera.lookAt(LOOK);
+  if (camera.view && camera.view.enabled) camera.clearViewOffset(); camera.updateProjectionMatrix();
+}
 const smooth = (a, b, t) => { t = Math.min(Math.max((t - a) / (b - a), 0), 1); return t * t * (3 - 2 * t); };
 function aimCamera() {
   const k = smooth(0, 1, state.camK), to = VIEW[state.camView || 'stage'];
@@ -252,6 +257,7 @@ async function boot() {
     $('#loading').classList.add('gone'); setTimeout(() => { $('#loading').style.display = 'none'; }, 800);   // 淡出后直接拿掉，免得有的浏览器停在半透明
     $('#hud').hidden = false; drawCorners(); renderCard();   // 上条、四个角、下条（钞票本身的内容）
     uniforms.uFold1.value = uniforms.uFold2.value = 0; pivot.position.set(0, 0, 0); pivot.rotation.z = 0;   // 印好的钞票就是这张：不再折起来再展开（用户 11-03）
+    printCam(0); renderer.render(scene, camera);   // 淡出之前就先摆成正上方看，免得先看到斜的、再跳到正上方（11-03「倒了一下」）
     state.phase = 'print'; state.t0 = performance.now(); wake();
   };
   if (window.__loader) window.__loader.done(reveal); else reveal();
@@ -362,7 +368,7 @@ function draw() {
   uniforms.uTime.value = now / 1000;
   if (state.phase === 'print') {   // 从印刷台正上方看的那张，镜头转个角度，变成我们展示的钞票（接加载动画，用户 11-03：直接、丝滑）
     const t = clamp01((now - state.t0) / 1500), e = ease(t);
-    camera.position.set(0, 3.6, .02).lerp(VIEW.bill.pos, e); camera.fov = VIEW.bill.fov; camera.lookAt(LOOK); camera.updateProjectionMatrix();
+    printCam(e);
     if (t >= 1) { state.phase = 'idle'; state.hintT = now; aimCamera(); mark('unfolded'); setHint(); refreshTip(true); setTimeout(loadSpotify, 900); setTimeout(loadStage, 300); }
     busy = true;
   }
@@ -719,9 +725,9 @@ function replay() {   // 结尾看完：点一下回到钞票（大场景做好�
   hideAd(); stopStory(); stop(); $('#card').hidden = false; cardData = null; renderCard();
   state.folding = false; state.endShown = false; uniforms.uEnd.value = 0; state.visited = {}; state.found = {}; state.foundOrder = [];   // 重来：从头探索
   star.root.visible = false; star.set(0, 0); pivot.visible = true;
-  uniforms.uSil.value = 0; uniforms.uWrite.value = 0; uniforms.uFold1.value = uniforms.uFold2.value = 1; state.camK = 0; aimCamera();
+  uniforms.uSil.value = 0; uniforms.uWrite.value = 0; uniforms.uFold1.value = uniforms.uFold2.value = 0; pivot.position.set(0, 0, 0); pivot.rotation.z = 0; state.camK = 0; printCam(0);   // 重看一遍也跟开场一样：平放的钞票，镜头从上面转过来
   const end = $('#acts .end'); if (end) end.remove();
-  state.phase = 'drop'; state.t0 = performance.now(); wake();
+  state.phase = 'print'; state.t0 = performance.now(); wake();
 }
 function showAct(i) {
   const a = ACTS[i];
@@ -889,7 +895,7 @@ function baseTip() {   // 上条正中的提示（用户 11-03：写全，做过
     `${X(allActs, 'click the portrait to begin')}${SEP}${X(f.torch, 'find the torch')}${SEP}${X(f.people, 'find We the People')}${SEP}${X(f.ten, 'find the shifting 10')}${SEP}the curled corner flips the note`];
 }
 // 刮刮条（用户 11-03）：提示一开始盖着一层银灰，写「要提示吗？刮开看看」；拖鼠标 / 手指划过就刮掉，刮开一半就整条揭开，之后一直开着
-let scratched = (() => { try { return sessionStorage.getItem('ham-scratched') === '1'; } catch (e) { return false; } })();
+let scratched = false;   // 每次进来都重新盖上（用户 11-03：刮开后再进来还是开的，不对）
 const scratch = document.createElement('canvas'); scratch.id = 'scratch'; scratch.setAttribute('aria-label', 'Hint · scratch to reveal');
 let scratchReady = false, scratchW = 0, scratchH = 0, scratchBase = 0;
 function paintCoat() {   // 刮刮层：银色刮刮胶（用户 11-03：金色那版不像刮刮乐，银色更好；只是边缘要自然）——边稍软、带一点起伏，不加阴影
@@ -923,14 +929,13 @@ function placeScratch() {   // 盖在提示那一行上，大小跟着提示变
   const dpr = Math.min(devicePixelRatio || 1, 2); scratchW = w; scratchH = h; const wasScraped = scratched; scratch.width = w * dpr; scratch.height = h * dpr;
   scratch.style.width = w + 'px'; scratch.style.height = h + 'px'; scratch.style.left = ((r.width - w) / 2) + 'px'; scratch.style.top = '-6px'; scratchReady = true; paintCoat(); if (wasScraped) scrapeOpen();
 }
-let scratching = false, scratchCount = 0, lastScratch = null;
+let scratching = false, scratchCount = 0, lastScratch = null, scratchStrokes = 0;
 function scratchAt(e) {
   const r = scratch.getBoundingClientRect(), g = scratch.getContext('2d'), dpr = scratch.width / scratchW;
   const x = (e.clientX - r.left) * dpr, y = (e.clientY - r.top) * dpr;
   g.globalCompositeOperation = 'destination-out'; g.lineCap = 'round'; g.lineWidth = 46 * dpr;   // 两次鼠标位置之间连成一道，像真的刮过
   g.beginPath(); if (lastScratch) g.moveTo(lastScratch[0], lastScratch[1]); else g.moveTo(x - .1, y); g.lineTo(x, y); g.stroke(); lastScratch = [x, y];
-  if (++scratchCount % 6) return;
-  checkScratch();
+  ++scratchCount;   // 刮开只看按了几下（第一下出一道，第二下整条开），不看面积
 }
 function scrapeOpen() {   // 揭开：不整条消失，像真刮过——中间刮出字来，上下边和两头留一些银色碎屑（用户 11-03：要有被刮开的质感，不要那层淡光）
   const g = scratch.getContext('2d'), W = scratch.width, H = scratch.height;
@@ -944,12 +949,12 @@ function scrapeOpen() {   // 揭开：不整条消失，像真刮过——中间
   scratch.classList.add('scraped'); $('#tip').classList.add('open'); lastScratch = null;
 }function clearRatio() { const d = scratch.getContext('2d').getImageData(0, 0, scratch.width, scratch.height).data; let c = 0; for (let i = 3; i < d.length; i += 32) if (d[i] < 40) c++; return c / (d.length / 32); }
 function checkScratch() {   // 刮掉的（减去毛边外本来就透明的那圈）够多了就整条揭开
-  if (clearRatio() - scratchBase > .18) { scratched = true; try { sessionStorage.setItem('ham-scratched', '1'); } catch (er) {} scrapeOpen(); }   // 刮一小片就整条揭开（用户 11-03：不用完全刮开）
+  if (clearRatio() - scratchBase > .18) { scratched = true; scrapeOpen(); }   // 刮一小片就整条揭开（用户 11-03：不用完全刮开）
 }
 scratch.addEventListener('pointerdown', e => { scratching = true; scratch.setPointerCapture(e.pointerId); scratchAt(e); });
-scratch.addEventListener('pointermove', e => { if (scratching || e.pointerType === 'mouse') scratchAt(e); });   // 鼠标划过就刮（像用硬币在上面蹭），不一定要按住
-scratch.addEventListener('pointerup', () => { scratching = false; if (!scratched) checkScratch(); });
-scratch.addEventListener('pointerleave', () => { lastScratch = null; if (!scratched && scratchCount) checkScratch(); });
+scratch.addEventListener('pointermove', e => { if (scratching) scratchAt(e); });   // 按住才刮（用户 11-03：刮刮乐是按住刮的）
+scratch.addEventListener('pointerup', () => { scratching = false; lastScratch = null; if (scratched) return; if (++scratchStrokes >= 2) { scratched = true; scrapeOpen(); } });   // 第一次按住刮出一道，第二次就整条刮开
+scratch.addEventListener('pointerleave', () => { lastScratch = null; });
 addEventListener('resize', () => { scratchReady = false; placeScratch(); });let tipKey = '';
 function refreshTip(force) {   // 状态变了就换「现在能做什么」，清单打勾
   if (state.phase !== 'idle' || state.folding) return;

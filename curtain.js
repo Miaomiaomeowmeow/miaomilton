@@ -1,7 +1,7 @@
 // 结尾（用户 11-03：折星太长 → 加歌、加介绍；最后加一页广告，「我们是做 advertising 的」）
 // 折星这 12 秒：底下那条换成这部剧的介绍，一句一句换；星飞上天以后：画面中间出广告页（没有底板，细线 + 字 + 光晕，跟全站一套）
 // 介绍的事实出处：官方网站 hamiltonmusical.com；普利策奖官网 pulitzer.org（2016 戏剧奖）；托尼奖官网 tonyawards.com（2016，11 项）
-export const FINALE_TRACK = '7EsSVPxaYoAZjQwhspJBs2';   // Who Lives, Who Dies, Who Tells Your Story（原版终曲）
+export const FINALE_TRACK = '0NJWhm3hUwIZSy5s0TGJ8q';   // The Story of Tonight（用户 11-03：终曲跟水印彩蛋重复了 → 换这首，「今晚的故事会被讲下去」，全站没用过）
 const LINES = [
   ['作词、作曲、编剧：林-曼努尔·米兰达。灵感来自罗恩·切尔诺 2004 年写的汉密尔顿传记。', 'Book, music and lyrics by Lin-Manuel Miranda, inspired by Ron Chernow’s 2004 biography of Hamilton.'],
   ['2015 年在纽约公共剧院首演，同年 8 月登上百老汇理查德·罗杰斯剧院。', 'It opened at The Public Theater in 2015, then moved to Broadway’s Richard Rodgers Theatre that August.'],

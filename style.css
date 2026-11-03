@@ -154,7 +154,28 @@ html:not([data-bg="bg-standalone"]) #quote { display: none; }   /* 街上版背�
 /* 刮刮条：盖在最上面那行提示上（用户 11-03） */
 #tip { pointer-events: auto; }
 #tip s { text-decoration-thickness: 1px; opacity: .5; }
-#scratch { position: absolute; top: 0; cursor: crosshair; touch-action: none; transition: opacity .4s; box-shadow: 0 1px 2px rgba(40,30,10,.25); }
+#scratch { position: absolute; top: 0; cursor: crosshair; touch-action: none; transition: opacity .5s; }
 #scratch.gone { opacity: 0; pointer-events: none; }
 #tip { white-space: normal; max-width: 560px; width: max-content; text-align: center; line-height: 1.35; }   /* 提示写全以后变长：限宽、折两行，不压到右上小键 */
 #tip::before, #tip::after { display: none; }
+
+/* ── 结尾广告页（curtain.js，用户 11-03）：星飞上天后出现；没有底板，跟全站一样细线 + 字 + 光晕 ── */
+#ad { position: fixed; inset: 0; z-index: 11; display: grid; place-items: center; opacity: 0; transition: opacity .8s; pointer-events: none; color: var(--bill-ink); }
+#ad.on { opacity: 1; pointer-events: auto; }
+#ad .ad-box { position: relative; text-align: center; padding: 40px 90px 34px; }
+#ad .ad-box::before { content: ""; position: absolute; inset: -40px -80px; z-index: -1; pointer-events: none;
+  background: radial-gradient(ellipse at 50% 50%, var(--wash-a) 0%, var(--wash-b) 48%, var(--wash-c) 74%); }
+#ad .ad-small { font: 600 12px Cinzel, Georgia, serif; letter-spacing: .55em; padding-left: .55em; }
+#ad .ad-big { font: 400 110px/1.05 "Pinyon Script", Georgia, serif; margin: 6px 0 2px; }
+#ad .ad-rule { display: flex; align-items: center; justify-content: center; gap: 12px; margin: 6px 0 14px; }
+#ad .ad-rule span { width: 150px; border-top: 1px solid currentColor; }
+#ad .ad-rule i { width: 7px; height: 7px; border: 1px solid currentColor; transform: rotate(45deg); }
+#ad .ad-line { font: italic 500 20px "Cormorant Garamond", "Songti SC", serif; }
+#ad .ad-btn { display: inline-flex; align-items: center; gap: 10px; margin-top: 22px; padding: 10px 30px 11px; color: var(--bill-cream); background: var(--bill-ink);
+  font: 600 13px Cinzel, "Songti SC", serif; letter-spacing: .3em; text-decoration: none; clip-path: polygon(4% 0, 100% 0, 96% 100%, 0 100%); }
+#ad .ad-btn:hover { filter: brightness(1.15); }
+#ad .ad-btn b { font-weight: 400; letter-spacing: 0; }
+#ad .ad-replay { display: block; margin: 16px auto 0; background: none; border: none; color: inherit; font: italic 500 17px "Cormorant Garamond", "Songti SC", serif; text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
+#ad .ad-fine { margin-top: 26px; font: 500 11px Cinzel, "Songti SC", serif; letter-spacing: .2em; opacity: .65; }
+html.zh #ad .ad-line, html.zh #ad .ad-replay { font-style: normal; }
+#tip { user-select: none; -webkit-user-select: none; }   /* 刮的时候别把字选成蓝色 */

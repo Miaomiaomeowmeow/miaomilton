@@ -4,6 +4,7 @@ import { createStage, createEggs, loadStageBytes } from './stage-test.js';   // 
 import { createStar } from './finale.js';   // 结尾折星（ham-star 对话做的，接口见 blender/star/接口.md）
 import { createPeople, INK_GLSL, ERASE_GLSL, peopleUniforms } from './people.js';
 import { openAlbum, closeAlbum, albumOpen } from './album.js';   // 邮票册（点右上 Stamps，用户 11-03 定稿）
+import { playStory, stopStory, showAd, hideAd } from './curtain.js';   // 结尾：折星时放歌 + 介绍，飞上天后广告页（用户 11-03）   // 邮票册（点右上 Stamps，用户 11-03 定稿）
 import { createActs, ACT_SEC } from './acts.js';   // 主线三幕舞台上的剪影（ham-star 对话做的，接口见 blender/acts/接口.md）   // 彩蛋③ We the People（ham-star 对话做的，接口见 blender/people/接口.md）
 
 const perf = window.__perf = { t0: performance.now(), frames: [], longTasks: [], marks: {} };
@@ -417,7 +418,7 @@ function draw() {
   if (state.starT0) {
     const t = now - state.starT0;
     star.set(clamp01(t / star.foldMs), clamp01((t - star.foldMs - 300) / star.riseMs));
-    if (t > star.foldMs + 300 + star.riseMs) { state.starT0 = 0; state.phase = 'done'; mark('finaleDone'); }
+    if (t > star.foldMs + 300 + star.riseMs) { state.starT0 = 0; state.phase = 'done'; mark('finaleDone'); stopStory(); $('#card').hidden = true; showAd(LANG_EN, replay); }   // 星飞上天：底条收起，出广告页
     busy = true;
   }
   // 彩蛋③：红字一笔笔卷成纸条叠到印章上（约 5.8 秒）；关掉卡片时倒着收回去（快一倍）
@@ -695,19 +696,20 @@ function foldStar() {   // 点金星：舞台立着就先合上再折；平放�
   if (state.phase !== 'idle' || state.popT0 || state.unpopT0 || state.folding) return;
   state.folding = true; state.starHover = false; clearTimeout(tipTimer); $('#tip').hidden = true;   // 折星时收起提示纸条，重来时再出来
   if (state.popped) { startFinale(); return; }
-  closeCard(); $('#acts').hidden = true; document.body.classList.remove('acts-open');
+  closeCard(); playStory(fillCard, LANG_EN); $('#acts').hidden = true; document.body.classList.remove('acts-open');
   state.yaw = state.pitch = 0; state.flipTo = 0;
   loadStar().then(() => { state.phase = 'finale'; state.foldFlat = true; wake(); });
 }
 function startFinale() {   // 主线演完：舞台合上 → 钞票摆正 → 换成星 → 折成星 → 往上飞
   if (!state.popped || state.unpopT0) return;
-  closeCard(); $('#acts').hidden = true; document.body.classList.remove('acts-open'); state.folding = true; clearTimeout(tipTimer); $('#tip').hidden = true;   // 折星时收起提示纸条
+  closeCard(); playStory(fillCard, LANG_EN); $('#acts').hidden = true; document.body.classList.remove('acts-open'); state.folding = true; clearTimeout(tipTimer); $('#tip').hidden = true;   // 折星时收起提示纸条，底条换成这部剧的介绍、放终曲
   state.flipTo = 0; state.yaw = state.pitch = 0; state.spinT0 = 0;
   if (acts) { for (const k in acts.prog) acts.set(k, 0); state.actTo = null; }   // 舞台合上之前，三幕的人先全部收回
   loadStar().then(() => { state.unpopT0 = performance.now(); state.phase = 'finale'; wake(); });
 }
 function replay() {   // 结尾看完：点一下回到钞票（大场景做好后改成回到街上）
   if (state.phase !== 'done') return;
+  hideAd(); stopStory(); stop(); $('#card').hidden = false; cardData = null; renderCard();
   state.folding = false; state.endShown = false; uniforms.uEnd.value = 0; state.visited = {}; state.found = {}; state.foundOrder = [];   // 重来：从头探索
   star.root.visible = false; star.set(0, 0); pivot.visible = true;
   uniforms.uSil.value = 0; uniforms.uWrite.value = 0; uniforms.uFold1.value = uniforms.uFold2.value = 1; state.camK = 0; aimCamera();
@@ -741,8 +743,8 @@ const shortTitle = t => t.replace(/\s*[（(][^）)]*[）)]\s*$/, '');   // 「Yo
 function shortLine(t) {   // 下条只放得下两三行：取前一两句，去掉括号里的操作说明
   t = t.replace(/\s*[（(][^）)]*[）)]\s*/g, ' ').trim();
   const max = LANG_EN ? 150 : 62, parts = t.match(/[^.!?。]+[.!?。]?\s*/g) || [t];
-  let out = ''; for (const p of parts) { if (out && (out + p).length > max) break; out += p; }
-  if (out.length < max * .45 && parts.length > 1) {   // 第一句太短（Victory at Yorktown.）：把下一句也带上，太长就在词之间截断加省略号
+  let out = '', used = 0; for (const p of parts) { if (out && (out + p).length > max) break; out += p; used++; }
+  if (out.length < max * .45 && used === 1 && parts.length > 1) {   // 第一句太短（Victory at Yorktown.）：把下一句也带上，太长就在词之间截断加省略号
     const more = (out + parts[1]).trim(); out = more.length <= max ? more : more.slice(0, more.lastIndexOf(LANG_EN ? ' ' : '，', max) > 0 ? more.lastIndexOf(LANG_EN ? ' ' : '，', max) : max).replace(/[,，;；:\s]+$/, '') + '…';
   }
   return out.trim();
@@ -773,7 +775,7 @@ function drawSeal(num, ring, img) {   // 照真钞印章：外圈锯齿 → 一�
 }
 function fillCard(c) {
   cardData = c; renderCard(); document.body.classList.add('card-open');
-  if (c.track) play(c.track); else stop();
+  if (c.track) play(c.track); else if (!c.keep) stop();   // keep：结尾介绍换句时歌接着放
   $('#player').classList.add('away'); clearTimeout(playerTimer); playerTimer = setTimeout(placePlayer, 900);
   wake();
 }
@@ -882,38 +884,53 @@ function baseTip() {   // 上条正中的提示（用户 11-03：写全，做过
 // 刮刮条（用户 11-03）：提示一开始盖着一层银灰，写「要提示吗？刮开看看」；拖鼠标 / 手指划过就刮掉，刮开一半就整条揭开，之后一直开着
 let scratched = (() => { try { return sessionStorage.getItem('ham-scratched') === '1'; } catch (e) { return false; } })();
 const scratch = document.createElement('canvas'); scratch.id = 'scratch'; scratch.setAttribute('aria-label', 'Hint · scratch to reveal');
-let scratchReady = false, scratchW = 0, scratchH = 0;
-function paintCoat() {
+let scratchReady = false, scratchW = 0, scratchH = 0, scratchBase = 0;
+function paintCoat() {   // 刮刮层：跟钞票一套的旧金色油墨，边缘像手刷的、不规则，带几道雕版细纹（用户 11-03：灰色长方块跟背景不融）
   const g = scratch.getContext('2d'), W = scratch.width, H = scratch.height, dpr = W / scratchW;
-  const grd = g.createLinearGradient(0, 0, W, H); grd.addColorStop(0, '#bdb9ad'); grd.addColorStop(.45, '#e4e1d8'); grd.addColorStop(.55, '#cfccc2'); grd.addColorStop(1, '#a9a598');
-  g.globalCompositeOperation = 'source-over'; g.fillStyle = grd; g.beginPath(); g.roundRect(0, 0, W, H, 4 * dpr); g.fill();
-  for (let i = 0; i < W * H / 40; i++) { g.fillStyle = `rgba(${Math.random() < .5 ? '255,255,255' : '60,55,40'},${Math.random() * .12})`; g.fillRect(Math.random() * W, Math.random() * H, dpr, dpr); }   // 细颗粒，像真的刮刮银
-  g.fillStyle = '#4a4532'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.globalCompositeOperation = 'source-over'; g.clearRect(0, 0, W, H);
+  const pad = 6 * dpr, rough = (i, n, amp) => amp * (Math.sin(i * 1.7) * .5 + Math.sin(i * .37 + 1) * .35 + Math.sin(i * 4.1) * .15);
+  g.beginPath(); const N = 60;
+  for (let i = 0; i <= N; i++) { const x = pad + (W - 2 * pad) * i / N; g[i ? 'lineTo' : 'moveTo'](x, pad + rough(i, N, 3 * dpr)); }
+  for (let i = 0; i <= 8; i++) g.lineTo(W - pad + rough(i + 70, 8, 4 * dpr), pad + (H - 2 * pad) * i / 8);
+  for (let i = N; i >= 0; i--) { const x = pad + (W - 2 * pad) * i / N; g.lineTo(x, H - pad + rough(i + 30, N, 3 * dpr)); }
+  for (let i = 8; i >= 0; i--) g.lineTo(pad + rough(i + 90, 8, 4 * dpr), pad + (H - 2 * pad) * i / 8);
+  g.closePath();
+  const grd = g.createLinearGradient(0, 0, W, 0); grd.addColorStop(0, 'rgba(176,150,92,0)'); grd.addColorStop(.06, '#b8a06a'); grd.addColorStop(.5, '#cdb985'); grd.addColorStop(.94, '#b39b64'); grd.addColorStop(1, 'rgba(176,150,92,0)');
+  g.fillStyle = grd; g.fill(); g.save(); g.clip();
+  g.strokeStyle = 'rgba(74,69,50,.22)'; g.lineWidth = .6 * dpr;   // 几道波浪雕版纹
+  for (let k = 0; k < 7; k++) { g.beginPath(); for (let x = 0; x <= W; x += 3 * dpr) { const y = H * (.18 + k * .11) + 2.2 * dpr * Math.sin(x / (9 * dpr) + k); x ? g.lineTo(x, y) : g.moveTo(x, y); } g.stroke(); }
+  for (let i = 0; i < W * H / 50; i++) { g.fillStyle = `rgba(${Math.random() < .5 ? '255,248,225' : '70,60,35'},${Math.random() * .14})`; g.fillRect(Math.random() * W, Math.random() * H, dpr, dpr); }
+  g.restore();
+  g.fillStyle = '#3f3a28'; g.textAlign = 'center'; g.textBaseline = 'middle';
   g.font = `600 ${11 * dpr}px Cinzel, Georgia, serif`; g.letterSpacing = `${3 * dpr}px`;
-  g.fillText(L1('要提示吗？刮开看看', 'NEED A HINT? · SCRATCH HERE'), W / 2, H / 2 + dpr);
+  g.fillText(L1('要提示吗？刮一下', 'NEED A HINT? · SCRATCH HERE'), W / 2, H / 2 + dpr);
+  scratchBase = clearRatio();   // 毛边外本来就是透明的，刮开多少要减掉这一圈
 }
 function placeScratch() {   // 盖在提示那一行上，大小跟着提示变
   if (scratched) { scratch.remove(); return; }
   const tip = $('#tip'); if (!scratch.parentNode) tip.appendChild(scratch);
-  const r = tip.getBoundingClientRect(), w = Math.min(Math.max(380, r.width), 560), h = Math.max(36, r.height);
+  const r = tip.getBoundingClientRect(), w = Math.min(Math.max(380, r.width), 560), h = Math.max(40, r.height + 12);
   if (scratchReady && Math.abs(w - scratchW) < 2 && Math.abs(h - scratchH) < 2) return;
   const dpr = Math.min(devicePixelRatio || 1, 2); scratchW = w; scratchH = h; scratch.width = w * dpr; scratch.height = h * dpr;
-  scratch.style.width = w + 'px'; scratch.style.height = h + 'px'; scratch.style.left = ((r.width - w) / 2) + 'px'; scratchReady = true; paintCoat();
+  scratch.style.width = w + 'px'; scratch.style.height = h + 'px'; scratch.style.left = ((r.width - w) / 2) + 'px'; scratch.style.top = '-6px'; scratchReady = true; paintCoat();
 }
 let scratching = false, scratchCount = 0, lastScratch = null;
 function scratchAt(e) {
   const r = scratch.getBoundingClientRect(), g = scratch.getContext('2d'), dpr = scratch.width / scratchW;
   const x = (e.clientX - r.left) * dpr, y = (e.clientY - r.top) * dpr;
-  g.globalCompositeOperation = 'destination-out'; g.lineCap = 'round'; g.lineWidth = 32 * dpr;   // 两次鼠标位置之间连成一道，像真的刮过
+  g.globalCompositeOperation = 'destination-out'; g.lineCap = 'round'; g.lineWidth = 46 * dpr;   // 两次鼠标位置之间连成一道，像真的刮过
   g.beginPath(); if (lastScratch) g.moveTo(lastScratch[0], lastScratch[1]); else g.moveTo(x - .1, y); g.lineTo(x, y); g.stroke(); lastScratch = [x, y];
   if (++scratchCount % 6) return;
-  const d = g.getImageData(0, 0, scratch.width, scratch.height).data; let clear = 0; for (let i = 3; i < d.length; i += 32) if (d[i] < 40) clear++;
-  if (clear / (d.length / 32) > .45) { scratched = true; try { sessionStorage.setItem('ham-scratched', '1'); } catch (er) {} scratch.classList.add('gone'); setTimeout(() => scratch.remove(), 400); }
+  checkScratch();
+}
+function clearRatio() { const d = scratch.getContext('2d').getImageData(0, 0, scratch.width, scratch.height).data; let c = 0; for (let i = 3; i < d.length; i += 32) if (d[i] < 40) c++; return c / (d.length / 32); }
+function checkScratch() {   // 刮掉的（减去毛边外本来就透明的那圈）够多了就整条揭开
+  if (clearRatio() - scratchBase > .18) { scratched = true; try { sessionStorage.setItem('ham-scratched', '1'); } catch (er) {} scratch.classList.add('gone'); setTimeout(() => scratch.remove(), 400); }   // 刮一小片就整条揭开（用户 11-03：不用完全刮开）
 }
 scratch.addEventListener('pointerdown', e => { scratching = true; scratch.setPointerCapture(e.pointerId); scratchAt(e); });
 scratch.addEventListener('pointermove', e => { if (scratching || e.pointerType === 'mouse') scratchAt(e); });   // 鼠标划过就刮（像用硬币在上面蹭），不一定要按住
-scratch.addEventListener('pointerup', () => { scratching = false; });
-scratch.addEventListener('pointerleave', () => { lastScratch = null; });
+scratch.addEventListener('pointerup', () => { scratching = false; if (!scratched) checkScratch(); });
+scratch.addEventListener('pointerleave', () => { lastScratch = null; if (!scratched && scratchCount) checkScratch(); });
 addEventListener('resize', () => { scratchReady = false; placeScratch(); });let tipKey = '';
 function refreshTip(force) {   // 状态变了就换「现在能做什么」，清单打勾
   if (state.phase !== 'idle' || state.folding) return;

@@ -17,13 +17,13 @@
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pinyon+Script&family=Cormorant+Garamond:ital,wght@0,500;1,500&family=Cinzel:wght@400;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pinyon+Script&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Cinzel:wght@400;600&family=Oswald:wght@500;600&display=swap">
 <link rel="stylesheet" href="style.css">
 <link rel="modulepreload" href="./vendor/build/three.core.js">
 <link rel="modulepreload" href="./vendor/build/three.module.js">
-<link rel="preload" href="./assets/bill-front.webp" as="image" crossorigin="anonymous">
-<link rel="preload" href="./assets/bill-back.webp" as="image" crossorigin="anonymous">
-<link rel="preload" href="./assets/bg-standalone.webp" as="image" crossorigin="anonymous">
+<link rel="preload" href="./assets/bill-front.webp?v=1103" as="image" crossorigin="anonymous">
+<link rel="preload" href="./assets/bill-back.webp?v=1103" as="image" crossorigin="anonymous">
+<link rel="preload" href="./assets/bg-standalone.webp?v=1103" as="image" crossorigin="anonymous">
 <script type="importmap">{"imports":{"three":"./vendor/build/three.module.js","three/addons/":"./vendor/examples/jsm/"}}</script>
 </head>
 <body>
@@ -64,8 +64,8 @@
     $('#ld-num').textContent = String(Math.round(p * 100)).padStart(8, '0');
   }
   function tick(now) {   // 显示的进度慢慢追真实进度：起步慢、收尾慢，最少印 2 秒，不会一闪而过
-    const cap = Math.min(1, (now - t0) / 2000), want = Math.min(target, cap);
-    shown += (want - shown) * .06 + (want > shown ? .0015 : 0); if (shown > want) shown = want;
+    const cap = Math.min(1, (now - t0) / 2200), want = target;
+    const e = cap < 1 ? cap * cap * (3 - 2 * cap) : 1; shown = Math.max(shown, Math.min(want, e));   // 按时间算，不按帧数：后台标签页帧很少也不会拖慢
     set(shown);
     if (onDone && shown >= .999) { set(1); $('#loading').classList.add('printed'); $('#ld-count .cap').textContent = 'ready'; const cb = onDone; onDone = null; setTimeout(cb, 900); return; }
     raf = requestAnimationFrame(tick);
@@ -95,6 +95,7 @@
   <ul id="tip-list" hidden></ul>
   <p id="stamp-found" hidden></p>
   <p id="tip"><span id="tip-now" role="status"></span></p>
+  <p id="quote" aria-hidden="true">I&#8217;M <em>NOT</em> THROWING<br>AWAY MY SHOT</p>   <!-- 原来印在背景图里，窗口一变就撞右下角方格边；11-03 改成网页上的字，固定在方格边里面 -->
 </div>
 
 <section id="card" aria-live="polite">

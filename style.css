@@ -23,7 +23,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 /* 加载动画 · 印钞机（用户 11-03 定） */
 #loading { position: fixed; inset: 0; z-index: 20; overflow: hidden; transition: opacity .7s; background: #cbbf97; }
 html:not([data-bg="bg-standalone"]) #loading { background: #1a1510 url(./assets/street-blur.webp) center/cover; }
-html[data-bg="bg-standalone"] #loading { background: #cbbf97 url(./assets/bg-standalone.webp) center/cover; }
+html[data-bg="bg-standalone"] #loading { background: #cbbf97 url(./assets/bg-standalone.webp?v=1103) center/cover; }
 #loading::before { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 48%, rgba(236,228,200,.8), rgba(222,210,172,.55) 60%, rgba(200,186,146,.35)); }
 #loading.gone { opacity: 0; pointer-events: none; }
 #ld { position: absolute; left: 50%; top: 50%; width: 1000px; height: 640px; transform-origin: 50% 50%; }
@@ -39,7 +39,7 @@ html[data-bg="bg-standalone"] #loading { background: #cbbf97 url(./assets/bg-sta
 #ld-count .no { font: 600 30px/1 Cinzel, Georgia, serif; letter-spacing: .18em; }
 #ld-count .cap { margin-top: 10px; font: italic 500 17px "Cormorant Garamond", Georgia, serif; color: #4a4532; letter-spacing: .04em; }
 #ld-count .cap::before, #ld-count .cap::after { content: ""; display: inline-block; width: 30px; border-top: 1px solid #4a4532; vertical-align: middle; margin: 0 12px; }
-#loading.printed #ld-sheet { transform: translateY(-14px) scale(1.03) rotate(-1.2deg); box-shadow: 0 2px 2px rgba(60,45,20,.2), 0 40px 50px -16px rgba(60,45,20,.5); }
+/* 印完直接平放（用户 11-03：不要拿起来、歪一下），滚筒走开后淡出接开场 */
 #loading.printed #ld-roller { transition: left 1s cubic-bezier(.5,0,.8,.4), opacity 1s; left: 1080px !important; opacity: 0; }
 
 #flip, #clap, #acts { display: none !important; }   /* 翻面在卷角、鼓掌点舞台、第几幕在圆章里：不另放按钮 */
@@ -77,7 +77,9 @@ html[data-bg="bg-standalone"] #street { display: none; }   /* 独立网站还没
 #stamp-found::before { content: ""; display: inline-block; width: 14px; height: 17px; border: 1px dashed var(--bill-ink); vertical-align: -3px; margin-right: 8px; }
 #stamp-found[hidden] { display: none; }
 #tip { position: fixed; left: 50%; top: 40px; transform: translateX(-50%); z-index: 5; margin: 0; white-space: nowrap; color: var(--bill-ink);
-  font: italic 500 18px "Cormorant Garamond", "Songti SC", serif; letter-spacing: .03em; transition: opacity .5s; pointer-events: none; }
+  font: italic 600 18px "Cormorant Garamond", "Songti SC", serif; letter-spacing: .02em; transition: opacity .5s; pointer-events: none;
+  padding: 4px 26px; background: radial-gradient(ellipse at 50% 50%, var(--wash-a) 0%, var(--wash-b) 55%, var(--wash-c) 80%);
+  text-shadow: 0 0 6px var(--wash-a), 0 0 2px var(--wash-a); }   /* 11-03：最上面那行提示看不清 → 大一点、粗一点、后面垫一层淡光 */
 #tip::before, #tip::after { content: ""; display: inline-block; width: 34px; border-top: 1px solid var(--bill-ink); vertical-align: middle; margin: 0 14px; }
 #tip.fade { opacity: 0; }
 
@@ -145,3 +147,14 @@ html.zh #album .al-close { font: 500 14px "Songti SC", serif; letter-spacing: .2
 html.zh #album .al-tk-t span { font-style: normal; font-weight: 600; font-size: 19px; letter-spacing: .08em; }
 html.zh #album .al-tk-t span.long { font-size: 15px; letter-spacing: 0; }
 html.zh #album .al-it, html.zh #album .al-cap { font-style: normal; }
+#quote { position: fixed; right: 52px; bottom: 50px; z-index: 4; margin: 0; text-align: right; pointer-events: none;
+  font: 600 24px/1.12 Oswald, "Arial Narrow", sans-serif; letter-spacing: .02em; color: #6e6648; }
+#quote em { font-style: normal; color: #f3ead2; }
+html:not([data-bg="bg-standalone"]) #quote { display: none; }   /* 街上版背景里没有这句 */
+/* 刮刮条：盖在最上面那行提示上（用户 11-03） */
+#tip { pointer-events: auto; }
+#tip s { text-decoration-thickness: 1px; opacity: .5; }
+#scratch { position: absolute; top: 0; cursor: crosshair; touch-action: none; transition: opacity .4s; box-shadow: 0 1px 2px rgba(40,30,10,.25); }
+#scratch.gone { opacity: 0; pointer-events: none; }
+#tip { white-space: normal; max-width: 560px; width: max-content; text-align: center; line-height: 1.35; }   /* 提示写全以后变长：限宽、折两行，不压到右上小键 */
+#tip::before, #tip::after { display: none; }

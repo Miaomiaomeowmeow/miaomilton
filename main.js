@@ -237,7 +237,7 @@ async function boot() {
   mark('bootStart');
   let got = 0; const step = () => { got++; window.__loader && window.__loader.to(got / 4 * .92); };   // 印钞机加载动画（index.html）：真加载完才印最后一截
   const bgName = document.documentElement.dataset.bg || 'street-blur';   // 独立网站打包时换成 bg-standalone（雕版头像 + 枪），街上版仍是虚化街道
-  const [f, b, bg] = await Promise.all(['bill-front', 'bill-back', bgName].map(n => loadTex(`./assets/${n}.webp`).then(t => (step(), t))));
+  const [f, b, bg] = await Promise.all(['bill-front', 'bill-back', bgName].map(n => loadTex(`./assets/${n}.webp?v=1103`).then(t => (step(), t))));
   uniforms.mapF.value = f; uniforms.mapB.value = b;
   bgTex = bg; bgTex.anisotropy = 1; scene.background = bgTex; fitBackground();
   const mask = await new Promise((res, rej) => texLoader.load('./assets/portrait-mask.png', res, undefined, rej));   // 头像剪空遮罩（tools/make_portrait_fill.py）
@@ -674,7 +674,7 @@ function open(key) {
   active = { key, act: -1 };
   state.foundOrder = state.foundOrder || []; if (!state.foundOrder.includes(key)) state.foundOrder.push(key);
   const n = state.foundOrder.indexOf(key);   // 圆章中间 = 这是找到的第几个，跟右上 Stamps x/5 对得上；环上写它藏在哪
-  fillCard({ num: ROMAN[n], ring: `HIDDEN SCENE · ${RING_WHERE[key][1]} · `, ringZh: `彩蛋 · ${RING_WHERE[key][0]} · `, zh: egg.zh, en: egg.en, line: egg.line, lineEn: egg.lineEn, track: egg.track });
+  fillCard({ num: '', img: STAMP_PIC[key], ring: `HIDDEN SCENE · ${RING_WHERE[key][1]} · `, ringZh: `彩蛋 · ${RING_WHERE[key][0]} · `, zh: egg.zh, en: egg.en, line: egg.line, lineEn: egg.lineEn, track: egg.track });
   showTip('点空白处收起', 'click any empty space to fold back');
   if (firstFind) stampFound();
 }
@@ -729,6 +729,7 @@ function showAct(i) {
 }
 // ---------- 下条：正在放（三格：圆章 | 曲名 + 一句介绍 | 播放器，位置固定，换画面只换内容） ----------
 const ROMAN = ['I', 'II', 'III', 'IV', 'V'];
+const STAMP_PIC = { torch: './assets/stamp-torch.webp', people: './assets/stamp-people.webp', ten: './assets/stamp-ten.webp', watermark: './assets/stamp-water.webp', treasury: './assets/stamp-treasury.webp' };   // 彩蛋圆章中间放邮票小图，罗马数字只留给三幕（用户 11-03：I II III 和 I～V 撞车分不清）
 const RING_WHERE = { torch: ['火炬', 'THE TORCH'], people: ['手写的 We the People', 'WE THE PEOPLE'], ten: ['会变色的 10', 'THE SHIFTING TEN'], watermark: ['水印', 'THE WATERMARK'], treasury: ['财政部大楼', 'THE TREASURY'] };   // 圆章环上写它藏在哪（要短，一圈放得下）
 let cardData = null;
 function idleCard() {   // 没在演、没开彩蛋：下条讲钞票本身
@@ -741,6 +742,9 @@ function shortLine(t) {   // 下条只放得下两三行：取前一两句，去
   t = t.replace(/\s*[（(][^）)]*[）)]\s*/g, ' ').trim();
   const max = LANG_EN ? 150 : 62, parts = t.match(/[^.!?。]+[.!?。]?\s*/g) || [t];
   let out = ''; for (const p of parts) { if (out && (out + p).length > max) break; out += p; }
+  if (out.length < max * .45 && parts.length > 1) {   // 第一句太短（Victory at Yorktown.）：把下一句也带上，太长就在词之间截断加省略号
+    const more = (out + parts[1]).trim(); out = more.length <= max ? more : more.slice(0, more.lastIndexOf(LANG_EN ? ' ' : '，', max) > 0 ? more.lastIndexOf(LANG_EN ? ' ' : '，', max) : max).replace(/[,，;；:\s]+$/, '') + '…';
+  }
   return out.trim();
 }
 function renderCard() {
@@ -748,23 +752,24 @@ function renderCard() {
   card.classList.toggle('no-song', !c.track);
   $('#card-title').textContent = shortTitle(L1(c.zh, c.en));
   $('#card-line').textContent = shortLine(L1(c.line, c.lineEn));
-  drawSeal(c.num, L1(c.ringZh, c.ring)); fitTitle();
+  drawSeal(c.num, L1(c.ringZh, c.ring), c.img); fitTitle();
 }
 function fitTitle() {   // 曲名太长就缩小，不超出 340 的格子
   const t = $('#card-title'); t.style.fontSize = '';
   const w = t.scrollWidth; if (w > 340) t.style.fontSize = (parseFloat(getComputedStyle(t).fontSize) * 340 / w) + 'px';
 }
 document.fonts && document.fonts.ready.then(fitTitle);
-function drawSeal(num, ring) {   // 照真钞印章：外圈锯齿 → 一圈字沿圆环走 → 中间只放一个大数字
+function drawSeal(num, ring, img) {   // 照真钞印章：外圈锯齿 → 一圈字沿圆环走 → 中间一个大数字（三幕）或一张邮票小图（彩蛋）
   const cx = 62, R = 60, rr = R - 20; let teeth = '';
   for (let i = 0; i <= 144; i++) { const t = i / 144 * 2 * Math.PI, r = i % 2 ? R - 4 : R; teeth += (i ? 'L' : 'M') + (cx + r * Math.cos(t)).toFixed(1) + ' ' + (cx + r * Math.sin(t)).toFixed(1); }
   const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
   const cs = getComputedStyle(document.documentElement), INK = cs.getPropertyValue('--bill-ink').trim() || '#4a4532', PAPER = cs.getPropertyValue('--bill-paper').trim() || '#ebe2c4';   // 街上版深色、独立网站米黄，颜色跟着 CSS 走
   $('#card-seal').innerHTML = `<path d="${teeth}Z" fill="${PAPER}" stroke="${INK}" stroke-width=".8"/><circle cx="${cx}" cy="${cx}" r="${R - 7}" fill="none" stroke="${INK}"/>`
     + `<path id="seal-ring" d="M${cx - rr} ${cx} a${rr} ${rr} 0 1 1 ${2 * rr} 0 a${rr} ${rr} 0 1 1 ${-2 * rr} 0" fill="none"/>`
-    + `<text font-family="Cinzel, Songti SC, serif" font-weight="600" font-size="8.5" fill="${INK}"><textPath href="#seal-ring" textLength="${(2 * Math.PI * rr - 4).toFixed(1)}" lengthAdjust="spacing">${esc(ring)}</textPath></text>`
+    + `<text font-family="Cinzel, Songti SC, serif" font-weight="600" font-size="9.5" fill="${INK}"><textPath href="#seal-ring" textLength="${(2 * Math.PI * rr - 4).toFixed(1)}" lengthAdjust="spacing">${esc(ring)}</textPath></text>`
     + `<circle cx="${cx}" cy="${cx}" r="${R - 24}" fill="none" stroke="${INK}" stroke-width=".9"/><circle cx="${cx}" cy="${cx}" r="${R - 27}" fill="none" stroke="${INK}" stroke-width=".4"/>`
-    + `<text x="${cx}" y="${cx + 1}" text-anchor="middle" dominant-baseline="central" font-family="Cinzel, Georgia, serif" font-weight="600" font-size="${num.length > 2 ? 24 : 32}" fill="${INK}">${esc(num)}</text>`;
+    + (img ? `<clipPath id="seal-pic"><circle cx="${cx}" cy="${cx}" r="${R - 28}"/></clipPath><image href="${img}" x="${cx - R + 28}" y="${cx - R + 28}" width="${2 * (R - 28)}" height="${2 * (R - 28)}" preserveAspectRatio="xMidYMid slice" clip-path="url(#seal-pic)"/>`
+      : `<text x="${cx}" y="${cx + 1}" text-anchor="middle" dominant-baseline="central" font-family="Cinzel, Georgia, serif" font-weight="600" font-size="${num.length > 2 ? 26 : 36}" fill="${INK}">${esc(num)}</text>`);
 }
 function fillCard(c) {
   cardData = c; renderCard(); document.body.classList.add('card-open');
@@ -855,22 +860,61 @@ let LANG_EN = (() => { try { const v = localStorage.getItem('ham-lang'); return 
 const L2 = (zh, en) => LANG_EN ? [en, zh] : [zh, en];
 const L1 = (zh, en) => LANG_EN ? en : zh;
 let tipPair = ['', ''];
-function setTipText(zh, en) { tipPair = [zh, en]; $('#tip-now').textContent = L1(zh, en); $('#tip').classList.remove('fade'); $('#tip').hidden = false; }
+function setTipText(zh, en) { tipPair = [zh, en]; $('#tip-now').innerHTML = L1(zh, en); $('#tip').classList.remove('fade'); $('#tip').hidden = false; placeScratch(); }   // 提示里可能有 <s>（做过的划掉）
 function showTip(zh, en) { tipHeld = zh; setTipText(zh, en); clearTimeout(tipTimer); }
 function hideTip(soon) { clearTimeout(tipTimer); tipTimer = setTimeout(() => { tipHeld = ''; refreshTip(true); }, soon ? 0 : 6000); }
-function baseTip() {   // 上条正中的舞台提示：一句话，像剧本里的斜体舞台说明（细的操作写在 Stamps 清单的「怎么玩」里）
+function baseTip() {   // 上条正中的提示（用户 11-03：写全，做过的划掉；拖和滚轮合成一句）：一开始盖着刮刮条，想看的人刮开
+  const f = state.found || {}, v = state.visited || {}, X = (done, t) => done ? `<s>${t}</s>` : t;
+  const SEP = ' · ', allActs = [0, 1, 2].every(i => v[i]);
   if (state.popped) {
-    const i = state.act || 0;
-    if (i === 0) return ['往左拖转台，进下一幕', 'drag the turntable left for the next act'];
-    if (i === 1) return ['点桌上的杯子举杯，或往左拖转台', 'raise the cups, or drag the turntable left'];
-    if (state.rewind && !state.rewind.done) return ['往右拖转台，时间倒回去', 'drag the turntable right to rewind'];
-    return state.endShown ? ['点空白处收起舞台，再点金星', 'click any empty space, then the gold star'] : ['演完了 · 点空白处收起舞台', 'the show is over · click any empty space to fold the stage'];
+    const i = state.act || 0, turn = ['拖转台或滚动滚轮', 'drag or scroll the turntable'], fold = ['点空白处收起舞台', 'click any empty space to fold the stage'];
+    if (i === 0) return [`${turn[0]}，进下一幕${SEP}${fold[0]}`, `${turn[1]} for the next act${SEP}${fold[1]}`];
+    if (i === 1) return [`点桌上的杯子举杯${SEP}${turn[0]}，进下一幕${SEP}${fold[0]}`, `raise the cups${SEP}${turn[1]} for the next act${SEP}${fold[1]}`];
+    if (state.rewind && !state.rewind.done) return [`往右拖或往上滚，时间倒回去${SEP}${fold[0]}`, `drag right or scroll up to rewind${SEP}${fold[1]}`];
+    return state.endShown ? [`演完了${SEP}${fold[0]}，再点金星`, `the show is over${SEP}${fold[1]}, then the gold star`] : [`演完了${SEP}${fold[0]}`, `the show is over${SEP}${fold[1]}`];
   }
-  if (state.endShown) return ['点钞票正中的金星，折成星', 'click the gold star to fold the note'];
-  if (state.flipTo) return ['点大楼，或对着光看左边的水印', 'try the building, or the watermark on the left'];
-  return ['点头像开场', 'click the portrait to begin'];
+  if (state.endShown) return ['都找到了 · 点钞票正中的金星，折成一颗星', 'all found · click the gold star to fold the note'];
+  if (state.flipTo) return [`找一找：${X(f.watermark, '对着光看左边的水印')}、${X(f.treasury, '财政部大楼')}${SEP}点弯下来的角，翻回正面`,
+    `find ${X(f.watermark, 'the watermark (hold it to the light)')}, ${X(f.treasury, 'the building')}${SEP}the bent corner flips it back`];
+  return [`${X(allActs, '点头像开场')}${SEP}找一找：${X(f.torch, '火炬')}、${X(f.people, 'We the People')}、${X(f.ten, '会变色的 10')}${SEP}点卷起的角，翻到背面`,
+    `${X(allActs, 'click the portrait to begin')}${SEP}find ${X(f.torch, 'the torch')}, ${X(f.people, 'We the People')}, ${X(f.ten, 'the shifting 10')}${SEP}the curled corner flips the note`];
 }
-let tipKey = '';
+// 刮刮条（用户 11-03）：提示一开始盖着一层银灰，写「要提示吗？刮开看看」；拖鼠标 / 手指划过就刮掉，刮开一半就整条揭开，之后一直开着
+let scratched = (() => { try { return sessionStorage.getItem('ham-scratched') === '1'; } catch (e) { return false; } })();
+const scratch = document.createElement('canvas'); scratch.id = 'scratch'; scratch.setAttribute('aria-label', 'Hint · scratch to reveal');
+let scratchReady = false, scratchW = 0, scratchH = 0;
+function paintCoat() {
+  const g = scratch.getContext('2d'), W = scratch.width, H = scratch.height, dpr = W / scratchW;
+  const grd = g.createLinearGradient(0, 0, W, H); grd.addColorStop(0, '#bdb9ad'); grd.addColorStop(.45, '#e4e1d8'); grd.addColorStop(.55, '#cfccc2'); grd.addColorStop(1, '#a9a598');
+  g.globalCompositeOperation = 'source-over'; g.fillStyle = grd; g.beginPath(); g.roundRect(0, 0, W, H, 4 * dpr); g.fill();
+  for (let i = 0; i < W * H / 40; i++) { g.fillStyle = `rgba(${Math.random() < .5 ? '255,255,255' : '60,55,40'},${Math.random() * .12})`; g.fillRect(Math.random() * W, Math.random() * H, dpr, dpr); }   // 细颗粒，像真的刮刮银
+  g.fillStyle = '#4a4532'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.font = `600 ${11 * dpr}px Cinzel, Georgia, serif`; g.letterSpacing = `${3 * dpr}px`;
+  g.fillText(L1('要提示吗？刮开看看', 'NEED A HINT? · SCRATCH HERE'), W / 2, H / 2 + dpr);
+}
+function placeScratch() {   // 盖在提示那一行上，大小跟着提示变
+  if (scratched) { scratch.remove(); return; }
+  const tip = $('#tip'); if (!scratch.parentNode) tip.appendChild(scratch);
+  const r = tip.getBoundingClientRect(), w = Math.min(Math.max(380, r.width), 560), h = Math.max(36, r.height);
+  if (scratchReady && Math.abs(w - scratchW) < 2 && Math.abs(h - scratchH) < 2) return;
+  const dpr = Math.min(devicePixelRatio || 1, 2); scratchW = w; scratchH = h; scratch.width = w * dpr; scratch.height = h * dpr;
+  scratch.style.width = w + 'px'; scratch.style.height = h + 'px'; scratch.style.left = ((r.width - w) / 2) + 'px'; scratchReady = true; paintCoat();
+}
+let scratching = false, scratchCount = 0, lastScratch = null;
+function scratchAt(e) {
+  const r = scratch.getBoundingClientRect(), g = scratch.getContext('2d'), dpr = scratch.width / scratchW;
+  const x = (e.clientX - r.left) * dpr, y = (e.clientY - r.top) * dpr;
+  g.globalCompositeOperation = 'destination-out'; g.lineCap = 'round'; g.lineWidth = 32 * dpr;   // 两次鼠标位置之间连成一道，像真的刮过
+  g.beginPath(); if (lastScratch) g.moveTo(lastScratch[0], lastScratch[1]); else g.moveTo(x - .1, y); g.lineTo(x, y); g.stroke(); lastScratch = [x, y];
+  if (++scratchCount % 6) return;
+  const d = g.getImageData(0, 0, scratch.width, scratch.height).data; let clear = 0; for (let i = 3; i < d.length; i += 32) if (d[i] < 40) clear++;
+  if (clear / (d.length / 32) > .45) { scratched = true; try { sessionStorage.setItem('ham-scratched', '1'); } catch (er) {} scratch.classList.add('gone'); setTimeout(() => scratch.remove(), 400); }
+}
+scratch.addEventListener('pointerdown', e => { scratching = true; scratch.setPointerCapture(e.pointerId); scratchAt(e); });
+scratch.addEventListener('pointermove', e => { if (scratching || e.pointerType === 'mouse') scratchAt(e); });   // 鼠标划过就刮（像用硬币在上面蹭），不一定要按住
+scratch.addEventListener('pointerup', () => { scratching = false; });
+scratch.addEventListener('pointerleave', () => { lastScratch = null; });
+addEventListener('resize', () => { scratchReady = false; placeScratch(); });let tipKey = '';
 function refreshTip(force) {   // 状态变了就换「现在能做什么」，清单打勾
   if (state.phase !== 'idle' || state.folding) return;
   const b = baseTip(), f = state.found || {}, v = state.visited || {};
@@ -909,7 +953,7 @@ function setLangKeys() {
 }
 $('#lang').addEventListener('click', () => {
   LANG_EN = !LANG_EN; try { localStorage.setItem('ham-lang', LANG_EN ? 'en' : 'zh'); } catch (e) {}
-  setLangKeys(); renderCard(); setTipText(...tipPair); refreshTip(true);
+  scratchReady = false; setLangKeys(); renderCard(); setTipText(...tipPair); refreshTip(true);   // 换语言：刮刮条上的字也重画
 });
 setLangKeys();
 function stampFound() {   // 找到彩蛋：Stamps 下面就近出一行，几秒后淡掉
@@ -924,7 +968,7 @@ function drawCorners() {
     for (let d = 4; d < L - 8; d += 11) s += `<rect x="${x1 + ux * d - (ux ? 0 : 4)}" y="${y1 + uy * d - (uy ? 0 : 4)}" width="8" height="8" rx="2"/>`;
     for (const o of [7, -7]) s += `<line x1="${x1 - uy * o}" y1="${y1 + ux * o}" x2="${x2 - uy * o}" y2="${y2 + ux * o}" stroke-width="1"/>`; };
   const corners = [[22, 22, 1, 1], [W - 22, 22, -1, 1], [22, H - 22, 1, -1]];
-  if (document.documentElement.dataset.bg !== 'bg-standalone') corners.push([W - 22, H - 22, -1, -1]);   // 独立网站右下角是背景自己的台词 I'M NOT THROWING AWAY MY SHOT，位置随屏幕变，不画方格边免得撞上（用户 11-03）
+  corners.push([W - 22, H - 22, -1, -1]);   // 右下角也画（11-03：背景里那句台词已往左上挪开，不再撞上）   // 独立网站右下角是背景自己的台词 I'M NOT THROWING AWAY MY SHOT，位置随屏幕变，不画方格边免得撞上（用户 11-03）
   for (const [x, y, dx, dy] of corners) {
     chain(x, y, x + dx * len, y); chain(x, y, x, y + dy * len);
     s += `<rect x="${x - 10}" y="${y - 10}" width="20" height="20" fill="${PAPER}" stroke-width="1"/><path d="M${x - 5} ${y} L${x} ${y - 5} L${x + 5} ${y} L${x} ${y + 5}Z" fill="${INK}" stroke="none"/>`;

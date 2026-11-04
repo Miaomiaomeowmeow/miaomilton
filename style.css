@@ -322,3 +322,5 @@ html.zh #brand .b5 { font-size: 12px; letter-spacing: .06em; }
   #brand .b5 { font-size: 10px; margin-top: 6px; }
   #tip { top: calc(124px + env(safe-area-inset-top)); }
 }
+#card-plug { display: flex; align-items: center; gap: 5px; }   /* 两个链接同一种对齐（用户 11-04：买票和 10 美元抽票下划线不在一条线上） */
+#card-plug a { display: inline-flex; align-items: center; gap: 5px; line-height: 1.2; }

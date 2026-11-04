@@ -41,6 +41,7 @@ export function showAd(en, onReplay, got) {
   ad.querySelector('.ad-save').addEventListener('click', e => { e.stopPropagation(); savePostcard(en, got || []); });
   document.body.appendChild(ad); requestAnimationFrame(() => ad && ad.classList.add('on'));
 }
+export const adOpen = () => !!ad;
 export function hideAd() { if (!ad) return; const a = ad; ad = null; a.classList.remove('on'); setTimeout(() => a.remove(), 500); }
 
 // 分享出口（求职官 11-03 第 4 条）：一张竖版明信片（1080×1920，Instagram 快拍的尺寸），贴着找到的邮票，带网址；手机上能直接分享，电脑上存成图片

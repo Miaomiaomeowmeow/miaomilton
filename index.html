@@ -18,7 +18,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pinyon+Script&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Cinzel:wght@400;600&family=Oswald:wght@500;600&display=swap">
-<link rel="stylesheet" href="style.css?v=1103n">
+<link rel="stylesheet" href="style.css?v=1103o">
 <link rel="modulepreload" href="./vendor/build/three.core.js">
 <link rel="modulepreload" href="./vendor/build/three.module.js">
 <link rel="preload" href="./assets/bill-front.webp?v=1103" as="image" crossorigin="anonymous">
@@ -67,10 +67,12 @@
     const cap = Math.min(1, (now - t0) / 2200), want = target;
     const e = cap < 1 ? cap * cap * (3 - 2 * cap) : 1; shown = Math.max(shown, Math.min(want, e));   // 按时间算，不按帧数：后台标签页帧很少也不会拖慢
     set(shown);
-    if (onDone && shown >= .999) { set(1); $('#loading').classList.add('printed'); $('#ld-count .cap').textContent = 'ready'; const cb = onDone; onDone = null; setTimeout(cb, 900); return; }
+    if (onDone && shown >= .999) { set(1); $('#loading').classList.add('printed'); $('#ld-count .cap').textContent = ZH ? '印好了' : 'ready'; const cb = onDone; onDone = null; setTimeout(cb, 900); return; }
     raf = requestAnimationFrame(tick);
   }
   function fit() { const s = Math.min(innerWidth / 1100, innerHeight / 720); $('#ld').style.transform = `translate(-50%,-50%) scale(${s})`; }
+  const ZH = (() => { try { return localStorage.getItem('ham-lang') === 'zh'; } catch (e) { return false; } })();   // 跟 main.js 一样：没选过就英文
+  if (ZH) $('#ld-count .cap').textContent = '正在印你的 10 美元';
   fit(); addEventListener('resize', fit); tex.onload = () => drawDrum(0); raf = requestAnimationFrame(tick);
   window.__loader = { to(p) { target = Math.max(target, p); }, done(cb) { target = 1; onDone = cb; } };
 })();
@@ -116,6 +118,6 @@
   <button id="credits-close" type="button">关闭 · Close</button>
 </dialog>
 
-<script type="module" src="main.js?v=1103n"></script>
+<script type="module" src="main.js?v=1103o"></script>
 </body>
 </html>

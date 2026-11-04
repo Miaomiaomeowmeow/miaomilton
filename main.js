@@ -1,11 +1,11 @@
 import * as THREE from 'three';
-import { BILL, SPOTS, ACTS, EGGS } from './scenes.js?v=1103n';
-import { createStage, createEggs, loadStageBytes } from './stage-test.js?v=1103n';   // 纸舞台（ham-stage 对话做的，接口见 blender/stage/接口.md）
-import { createStar } from './finale.js?v=1103n';   // 结尾折星（ham-star 对话做的，接口见 blender/star/接口.md）
-import { createPeople, INK_GLSL, ERASE_GLSL, peopleUniforms } from './people.js?v=1103n';
-import { openAlbum, closeAlbum, albumOpen } from './album.js?v=1103n';   // 邮票册（点右上 Stamps，用户 11-03 定稿）
-import { playStory, stopStory, showAd, hideAd } from './curtain.js?v=1103n';   // 结尾：折星时放歌 + 介绍，飞上天后广告页（用户 11-03）   // 邮票册（点右上 Stamps，用户 11-03 定稿）
-import { createActs, ACT_SEC } from './acts.js?v=1103n';   // 主线三幕舞台上的剪影（ham-star 对话做的，接口见 blender/acts/接口.md）   // 彩蛋③ We the People（ham-star 对话做的，接口见 blender/people/接口.md）
+import { BILL, SPOTS, ACTS, EGGS } from './scenes.js?v=1103o';
+import { createStage, createEggs, loadStageBytes } from './stage-test.js?v=1103o';   // 纸舞台（ham-stage 对话做的，接口见 blender/stage/接口.md）
+import { createStar } from './finale.js?v=1103o';   // 结尾折星（ham-star 对话做的，接口见 blender/star/接口.md）
+import { createPeople, INK_GLSL, ERASE_GLSL, peopleUniforms } from './people.js?v=1103o';
+import { openAlbum, closeAlbum, albumOpen } from './album.js?v=1103o';   // 邮票册（点右上 Stamps，用户 11-03 定稿）
+import { playStory, stopStory, showAd, hideAd, adOpen } from './curtain.js?v=1103o';   // 结尾：折星时放歌 + 介绍，飞上天后广告页（用户 11-03）   // 邮票册（点右上 Stamps，用户 11-03 定稿）
+import { createActs, ACT_SEC } from './acts.js?v=1103o';   // 主线三幕舞台上的剪影（ham-star 对话做的，接口见 blender/acts/接口.md）   // 彩蛋③ We the People（ham-star 对话做的，接口见 blender/people/接口.md）
 
 const perf = window.__perf = { t0: performance.now(), frames: [], longTasks: [], marks: {} };
 try { new PerformanceObserver(l => l.getEntries().forEach(e => perf.longTasks.push({ at: Math.round(e.startTime), ms: Math.round(e.duration) }))).observe({ type: 'longtask', buffered: true }); } catch (e) {}
@@ -1009,6 +1009,8 @@ function setLangKeys() {
 $('#lang').addEventListener('click', () => {
   LANG_EN = !LANG_EN; try { localStorage.setItem('ham-lang', LANG_EN ? 'en' : 'zh'); } catch (e) {}
   scratchReady = false; setLangKeys(); renderCard(); setTipText(...tipPair); refreshTip(true);   // 换语言：刮刮条上的字也重画
+  if (adOpen()) showAd(LANG_EN, replay, Object.keys(state.found || {}).filter(k => state.found[k]));   // 广告页、邮票册开着时也换成新语言（用户 11-03：中文版 Get tickets 没变成中文）
+  if (albumOpen()) { closeAlbum(true); showAlbum(); }
 });
 setLangKeys();
 function stampFound() {   // 找到彩蛋：Stamps 下面就近出一行，几秒后淡掉
@@ -1076,4 +1078,4 @@ $('#credits-close').addEventListener('click', () => $('#credits').close());
 window.__ham = { renderCard: () => renderCard(), state, uniforms, aim: aimCamera, open, flip, showAct, closeCard, popUp, startFinale, replay, closeStage, foldStar, wake, renderer, camera, scene, get stage() { return stage; }, get acts() { return acts; }, get act3Ham() { return act3Ham; }, get star() { return star; }, get eggs() { return eggs; },
   idle: () => !raf, info: () => ({ calls: renderer.info.render.calls, tris: renderer.info.render.triangles, programs: renderer.info.programs.length }),
   gpu: () => { const gl = renderer.getContext(), e = gl.getExtension('WEBGL_debug_renderer_info'); return e ? gl.getParameter(e.UNMASKED_RENDERER_WEBGL) : '?'; } };
-if (new URLSearchParams(location.search).has('jump')) import('./jump.js?v=1103n');   // 测试用跳转按钮：网址带 ?jump 才装
+if (new URLSearchParams(location.search).has('jump')) import('./jump.js?v=1103o');   // 测试用跳转按钮：网址带 ?jump 才装

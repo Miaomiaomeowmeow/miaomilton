@@ -298,3 +298,15 @@ body:has(#ad.on) #tip { display: none; }   /* 广告页出来时收起刮刮条�
   body:has(#ad.on) #card-seal, body:has(#ad.on) #card .txt { display: none; }   /* 手机上广告页已经在讲这部剧，底条只留 Spotify */
   body:has(#ad.on) #card::before { display: none; }
 }
+#ld-title { position: absolute; left: 500px; top: -46px; transform: translateX(-50%); white-space: nowrap; color: #4a4532; font: 600 30px/1 Cinzel, Georgia, serif; letter-spacing: .3em; padding-left: .3em; }   /* 加载页剧名（求职官 11-04）：比编号大一号，跟左上角剧目牌同一套字 */
+#ld-title i { font-style: normal; opacity: .6; }
+@media (max-width: 599px) { #ld-title { font-size: 34px; letter-spacing: .14em; top: -80px; } }   /* 手机上整台印钞机缩到三分之一，剧名单独放大 */
+
+#ld-kicker { position: absolute; left: 500px; top: -86px; transform: translateX(-50%); white-space: nowrap; color: #4a4532; font: 600 15px/1 Cinzel, "Songti SC", serif; letter-spacing: .32em; padding-left: .32em; opacity: .8; }   /* 正在上演（11-04） */
+#ld-count .cap { font-size: 19px; }
+#ld-count .cap::before, #ld-count .cap::after { width: 22px; }
+@media (max-width: 599px) {
+  #ld-kicker { font-size: 24px; letter-spacing: .16em; top: -132px; }
+  #ld-count .cap { font-size: 34px; white-space: normal; width: 1000px; }   /* 手机上整台印钞机缩成三分之一：说明字单独放大、可以折行 */
+  #ld-count .cap::before, #ld-count .cap::after { display: none; }
+}

@@ -18,7 +18,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pinyon+Script&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Cinzel:wght@400;600&family=Oswald:wght@500;600&display=swap">
-<link rel="stylesheet" href="style.css?v=1103v">
+<link rel="stylesheet" href="style.css?v=1103z">
 <link rel="modulepreload" href="./vendor/build/three.core.js">
 <link rel="modulepreload" href="./vendor/build/three.module.js">
 <link rel="preload" href="./assets/bill-front.webp?v=1103" as="image" crossorigin="anonymous">
@@ -32,9 +32,11 @@
 <!-- 加载动画 = 印钞机（用户 11-03 定）：空白钞票纸从雕版滚筒底下过，印到哪 = 加载到哪；编号就是百分比；印完钞票被拿起来，接着开场 -->
 <div id="loading" aria-live="polite" aria-label="Loading · 加载中">
   <div id="ld">
+    <div id="ld-kicker">NOW PLAYING ON BROADWAY &amp; ON TOUR</div>   <!-- 11-04 她要开头就讲「10 美元 = 一个座位」，求职官定字；官网 11-04 列着百老汇、北美巡演、伦敦、韩国 -->
+    <div id="ld-title">HAMILTON <i>·</i> AN AMERICAN MUSICAL</div>   <!-- 求职官 11-04：加载页只加剧名这一行（品牌第一秒就出现）；中英都用这行英文，像标志一样不翻译 -->
     <div id="ld-sheet"><div id="ld-print"></div><div id="ld-wet"></div></div>
     <div id="ld-roller"><img src="./assets/loader-roller.webp" alt=""><canvas id="ld-drum" width="174" height="668"></canvas><img class="wh" src="./assets/loader-wheel0.webp" style="top:78px" alt=""><img class="wh" src="./assets/loader-wheel1.webp" style="top:474px" alt=""></div>
-    <div id="ld-count"><div class="no">QD <span id="ld-num">00000000</span> A</div><div class="cap">printing your ten dollars</div></div>
+    <div id="ld-count"><div class="no">QD <span id="ld-num">00000000</span> A</div><div class="cap">Printing your $10 — in the $10 lottery, it could win you a seat.</div></div>
   </div>
 </div>
 <script>
@@ -67,12 +69,12 @@
     const cap = Math.min(1, (now - t0) / 2200), want = target;
     const e = cap < 1 ? cap * cap * (3 - 2 * cap) : 1; shown = Math.max(shown, Math.min(want, e));   // 按时间算，不按帧数：后台标签页帧很少也不会拖慢
     set(shown);
-    if (onDone && shown >= .999) { set(1); $('#loading').classList.add('printed'); $('#ld-count .cap').textContent = ZH ? '印好了' : 'ready'; const cb = onDone; onDone = null; setTimeout(cb, 900); return; }
+    if (onDone && shown >= .999) { set(1); $('#loading').classList.add('printed'); $('#ld-count .cap').textContent = ZH ? '票印好了 · 入场' : 'Ticket printed · Enter the show'; const cb = onDone; onDone = null; setTimeout(cb, 900); return; }
     raf = requestAnimationFrame(tick);
   }
-  function fit() { const s = Math.min(innerWidth / 1100, innerHeight / 720); $('#ld').style.transform = `translate(-50%,-50%) scale(${s})`; }
+  function fit() { const s = Math.min(innerWidth / 1100, innerHeight / 900); $('#ld').style.transform = `translate(-50%,-50%) scale(${s})`; }   // 高度多留给上面的「正在上演」和剧名
   const ZH = (() => { try { return localStorage.getItem('ham-lang') === 'zh'; } catch (e) { return false; } })();   // 跟 main.js 一样：没选过就英文
-  if (ZH) $('#ld-count .cap').textContent = '正在印你的 10 美元';
+  if (ZH) { $('#ld-count .cap').textContent = '正在印你的 10 美元——参加 10 美元抽票，它也许能帮你抽到一个座位。'; $('#ld-kicker').textContent = '正在百老汇及全美巡演上演'; }   // 剧名那行像标志一样，中文版也用英文
   fit(); addEventListener('resize', fit); tex.onload = () => drawDrum(0); raf = requestAnimationFrame(tick);
   window.__loader = { to(p) { target = Math.max(target, p); }, done(cb) { target = 1; onDone = cb; } };
 })();
@@ -119,6 +121,6 @@
   <button id="credits-close" type="button">关闭 · Close</button>
 </dialog>
 
-<script type="module" src="main.js?v=1103v"></script>
+<script type="module" src="main.js?v=1103z"></script>
 </body>
 </html>

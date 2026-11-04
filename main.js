@@ -1,11 +1,11 @@
 import * as THREE from 'three';
-import { BILL, SPOTS, ACTS, EGGS } from './scenes.js?v=1103t';
-import { createStage, createEggs, loadStageBytes } from './stage-test.js?v=1103t';   // 纸舞台（ham-stage 对话做的，接口见 blender/stage/接口.md）
-import { createStar } from './finale.js?v=1103t';   // 结尾折星（ham-star 对话做的，接口见 blender/star/接口.md）
-import { createPeople, INK_GLSL, ERASE_GLSL, peopleUniforms } from './people.js?v=1103t';
-import { openAlbum, closeAlbum, albumOpen } from './album.js?v=1103t';   // 邮票册（点右上 Stamps，用户 11-03 定稿）
-import { playStory, stopStory, showAd, hideAd, adOpen } from './curtain.js?v=1103t';   // 结尾：折星时放歌 + 介绍，飞上天后广告页（用户 11-03）   // 邮票册（点右上 Stamps，用户 11-03 定稿）
-import { createActs, ACT_SEC } from './acts.js?v=1103t';   // 主线三幕舞台上的剪影（ham-star 对话做的，接口见 blender/acts/接口.md）   // 彩蛋③ We the People（ham-star 对话做的，接口见 blender/people/接口.md）
+import { BILL, SPOTS, ACTS, EGGS } from './scenes.js?v=1103v';
+import { createStage, createEggs, loadStageBytes } from './stage-test.js?v=1103v';   // 纸舞台（ham-stage 对话做的，接口见 blender/stage/接口.md）
+import { createStar } from './finale.js?v=1103v';   // 结尾折星（ham-star 对话做的，接口见 blender/star/接口.md）
+import { createPeople, INK_GLSL, ERASE_GLSL, peopleUniforms } from './people.js?v=1103v';
+import { openAlbum, closeAlbum, albumOpen } from './album.js?v=1103v';   // 邮票册（点右上 Stamps，用户 11-03 定稿）
+import { playStory, stopStory, showAd, hideAd, adOpen } from './curtain.js?v=1103v';   // 结尾：折星时放歌 + 介绍，飞上天后广告页（用户 11-03）   // 邮票册（点右上 Stamps，用户 11-03 定稿）
+import { createActs, ACT_SEC } from './acts.js?v=1103v';   // 主线三幕舞台上的剪影（ham-star 对话做的，接口见 blender/acts/接口.md）   // 彩蛋③ We the People（ham-star 对话做的，接口见 blender/people/接口.md）
 
 const perf = window.__perf = { t0: performance.now(), frames: [], longTasks: [], marks: {} };
 try { new PerformanceObserver(l => l.getEntries().forEach(e => perf.longTasks.push({ at: Math.round(e.startTime), ms: Math.round(e.duration) }))).observe({ type: 'longtask', buffered: true }); } catch (e) {}
@@ -23,9 +23,23 @@ const LOOK = new THREE.Vector3(0, 0, .08);
 
 // ---------- 背景：虚化的街道（钞票本来就在大场景里；大场景做好前先用一张提前虚化好的街道图占位） ----------
 let bgTex = null;
+let bgPortrait = null;
+function portraitBackground(ca) {   // 手机竖屏（用户 11-04）：原图按 cover 裁只剩中间一条头发 → 底子用中间那块空白纸纹铺满，右上角那把冒烟的枪和侧脸剪下来放在屏幕右上
+  const img = bgTex.image, W = 1024, H = Math.round(W / ca);
+  if (bgPortrait && bgPortrait.image.height === H) return bgPortrait;
+  const cv = document.createElement('canvas'); cv.width = W; cv.height = H; const g = cv.getContext('2d');
+  g.drawImage(img, img.width * .37, 0, img.width * .3, img.height, 0, 0, W, H);   // 中间空白那块：只有纸纹和细线
+  const sx = img.width * .77, sw = img.width - sx, sh = img.height * .8, dw = W * .5, dh = dw * sh / sw, top = H * .2;   // 缩到半屏宽、从刮刮条下面开始放，侧脸露在刮刮条和钞票之间；调淡，不跟舞台抢（第一版太大太花）
+  g.globalAlpha = .62; g.drawImage(img, sx, 0, sw, sh, W - dw, top, dw, dh); g.globalAlpha = 1;
+  if (bgPortrait) bgPortrait.dispose();
+  bgPortrait = new THREE.CanvasTexture(cv); bgPortrait.colorSpace = bgTex.colorSpace;
+  return bgPortrait;
+}
 function fitBackground() {   // 按画面比例裁切，像 CSS 的 cover
   if (!bgTex || !bgTex.image) return;
   const ia = bgTex.image.width / bgTex.image.height, ca = innerWidth / innerHeight;
+  if (ca < .8 && document.documentElement.dataset.bg === 'bg-standalone') { scene.background = portraitBackground(ca); return; }
+  scene.background = bgTex;
   bgTex.repeat.set(ca < ia ? ca / ia : 1, ca < ia ? 1 : ia / ca);
   bgTex.offset.set((1 - bgTex.repeat.x) / 2, (1 - bgTex.repeat.y) / 2);
 }
@@ -798,7 +812,9 @@ function renderCard() {
   const plug = $('#card-plug'), STUB = '<svg class="stub" viewBox="0 0 26 14" aria-hidden="true"><path d="M0 0H26V4.5A2.5 2.5 0 0 0 26 9.5V14H0V9.5A2.5 2.5 0 0 0 0 4.5Z" fill="currentColor"/><path d="M20 2.5V11.5" stroke="var(--bill-cream)" stroke-width="1.2" stroke-dasharray="1.4 1.6"/></svg>';   // 小票根：跟左上角 B 同一个样子（求职官 11-04：认得出，不用更大）
   const plugHtml = t => `<span>${t}</span> <a href="${TICKETS_URL}" target="_blank" rel="noopener">${STUB}${L1('去官网买票', 'Get tickets')} &#8599;</a>`;
   plug.innerHTML = c.plug ? plugHtml(L1(c.plug[0], c.plug[1])) : ''; plug.hidden = !c.plug;
-  if (c.plug && plug.scrollWidth > (plug.parentNode.clientWidth || 340)) plug.innerHTML = plugHtml(L1(c.plug[0], c.plug[1]).replace('hear it live on Broadway', 'live on Broadway').replace(/^From /, ''));   // 放不下就把前半句缩短，Get tickets 不掉到第二行   // 那一行后面接买票链接（求职官 11-03 第 2 条：不另加按钮，免得跟 Spotify 抢）
+  const fits = () => plug.scrollWidth <= (plug.parentNode.clientWidth || 340);
+  if (c.plug && !fits()) plug.innerHTML = plugHtml(L1(c.plug[0], c.plug[1]).replace('hear it live on Broadway', 'live on Broadway').replace(/^From /, ''));
+  if (c.plug && !fits()) plug.innerHTML = plugHtml(L1('去百老汇现场听。', 'Live on Broadway.'));   // 手机上还放不下：只留最短的一句   // 放不下就把前半句缩短，Get tickets 不掉到第二行   // 那一行后面接买票链接（求职官 11-03 第 2 条：不另加按钮，免得跟 Spotify 抢）
   drawSeal(c.num, L1(c.ringZh, c.ring), c.img); fitTitle();
 }
 function fitTitle() {   // 曲名太长就缩小，不超出 340 的格子
@@ -1103,4 +1119,4 @@ $('#credits-close').addEventListener('click', () => $('#credits').close());
 window.__ham = { renderCard: () => renderCard(), state, uniforms, aim: aimCamera, open, flip, showAct, closeCard, popUp, startFinale, replay, closeStage, foldStar, wake, renderer, camera, scene, get stage() { return stage; }, get acts() { return acts; }, get act3Ham() { return act3Ham; }, get star() { return star; }, get eggs() { return eggs; },
   idle: () => !raf, info: () => ({ calls: renderer.info.render.calls, tris: renderer.info.render.triangles, programs: renderer.info.programs.length }),
   gpu: () => { const gl = renderer.getContext(), e = gl.getExtension('WEBGL_debug_renderer_info'); return e ? gl.getParameter(e.UNMASKED_RENDERER_WEBGL) : '?'; } };
-if (new URLSearchParams(location.search).has('jump')) import('./jump.js?v=1103t');   // 测试用跳转按钮：网址带 ?jump 才装
+if (new URLSearchParams(location.search).has('jump')) import('./jump.js?v=1103v');   // 测试用跳转按钮：网址带 ?jump 才装

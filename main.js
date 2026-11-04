@@ -1,11 +1,11 @@
 import * as THREE from 'three';
-import { BILL, SPOTS, ACTS, EGGS } from './scenes.js?v=1103e';
-import { createStage, createEggs, loadStageBytes } from './stage-test.js?v=1103e';   // 纸舞台（ham-stage 对话做的，接口见 blender/stage/接口.md）
-import { createStar } from './finale.js?v=1103e';   // 结尾折星（ham-star 对话做的，接口见 blender/star/接口.md）
-import { createPeople, INK_GLSL, ERASE_GLSL, peopleUniforms } from './people.js?v=1103e';
-import { openAlbum, closeAlbum, albumOpen } from './album.js?v=1103e';   // 邮票册（点右上 Stamps，用户 11-03 定稿）
-import { playStory, stopStory, showAd, hideAd } from './curtain.js?v=1103e';   // 结尾：折星时放歌 + 介绍，飞上天后广告页（用户 11-03）   // 邮票册（点右上 Stamps，用户 11-03 定稿）
-import { createActs, ACT_SEC } from './acts.js?v=1103e';   // 主线三幕舞台上的剪影（ham-star 对话做的，接口见 blender/acts/接口.md）   // 彩蛋③ We the People（ham-star 对话做的，接口见 blender/people/接口.md）
+import { BILL, SPOTS, ACTS, EGGS } from './scenes.js?v=1103f';
+import { createStage, createEggs, loadStageBytes } from './stage-test.js?v=1103f';   // 纸舞台（ham-stage 对话做的，接口见 blender/stage/接口.md）
+import { createStar } from './finale.js?v=1103f';   // 结尾折星（ham-star 对话做的，接口见 blender/star/接口.md）
+import { createPeople, INK_GLSL, ERASE_GLSL, peopleUniforms } from './people.js?v=1103f';
+import { openAlbum, closeAlbum, albumOpen } from './album.js?v=1103f';   // 邮票册（点右上 Stamps，用户 11-03 定稿）
+import { playStory, stopStory, showAd, hideAd } from './curtain.js?v=1103f';   // 结尾：折星时放歌 + 介绍，飞上天后广告页（用户 11-03）   // 邮票册（点右上 Stamps，用户 11-03 定稿）
+import { createActs, ACT_SEC } from './acts.js?v=1103f';   // 主线三幕舞台上的剪影（ham-star 对话做的，接口见 blender/acts/接口.md）   // 彩蛋③ We the People（ham-star 对话做的，接口见 blender/people/接口.md）
 
 const perf = window.__perf = { t0: performance.now(), frames: [], longTasks: [], marks: {} };
 try { new PerformanceObserver(l => l.getEntries().forEach(e => perf.longTasks.push({ at: Math.round(e.startTime), ms: Math.round(e.duration) }))).observe({ type: 'longtask', buffered: true }); } catch (e) {}
@@ -779,8 +779,8 @@ function drawSeal(num, ring, img) {   // 照真钞印章：外圈锯齿 → 一�
   for (let i = 0; i <= 144; i++) { const t = i / 144 * 2 * Math.PI, r = i % 2 ? R - 4 : R; teeth += (i ? 'L' : 'M') + (cx + r * Math.cos(t)).toFixed(1) + ' ' + (cx + r * Math.sin(t)).toFixed(1); }
   const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
   const cs = getComputedStyle(document.documentElement), INK = cs.getPropertyValue('--card-ink').trim() || cs.getPropertyValue('--bill-ink').trim() || '#4a4532', PAPER = cs.getPropertyValue('--bill-paper').trim() || '#ebe2c4';   // 圆章单独一个颜色（用户 11-03：跟头发花纹混在一起 → 换色），街上版跟着 CSS 走
-  const SV = document.documentElement.dataset.seal || 'orig';   // 圆章画法：orig = 最初那版（填纸色）；plain = 去掉环上小字；solid / pad = 11-03 试过的   // 小样对比用：solid = 实心印章（字反白）；pad = 后面垫一小圈纸色
-  const FILL = SV === 'solid' ? INK : SV === 'pad' ? 'none' : PAPER, LINE = SV === 'solid' ? PAPER : INK;
+  const SV = document.documentElement.dataset.seal || 'pad0';   // 定稿：pad0 = 只有线，不填色（用户 11-03「还是最初的，不要底色」）   // 圆章画法：orig = 最初那版（填纸色）；plain = 去掉环上小字；solid / pad = 11-03 试过的   // 小样对比用：solid = 实心印章（字反白）；pad = 后面垫一小圈纸色
+  const FILL = SV === 'solid' ? INK : (SV === 'pad' || SV === 'pad0') ? 'none' : PAPER, LINE = SV === 'solid' ? PAPER : INK;
   $('#card-seal').innerHTML = (SV === 'pad' ? `<defs><radialGradient id="seal-pad"><stop offset="0" stop-color="${PAPER}" stop-opacity=".95"/><stop offset=".78" stop-color="${PAPER}" stop-opacity=".9"/><stop offset="1" stop-color="${PAPER}" stop-opacity="0"/></radialGradient></defs><circle cx="${cx}" cy="${cx}" r="${R + 2}" fill="url(#seal-pad)"/>` : '')
     + `<path d="${teeth}Z" fill="${FILL}" stroke="${INK}" stroke-width=".8"/><circle cx="${cx}" cy="${cx}" r="${R - 7}" fill="none" stroke="${LINE}"/>`
     + `<path id="seal-ring" d="M${cx - rr} ${cx} a${rr} ${rr} 0 1 1 ${2 * rr} 0 a${rr} ${rr} 0 1 1 ${-2 * rr} 0" fill="none"/>`
@@ -1065,4 +1065,4 @@ $('#credits-close').addEventListener('click', () => $('#credits').close());
 window.__ham = { renderCard: () => renderCard(), state, uniforms, aim: aimCamera, open, flip, showAct, closeCard, popUp, startFinale, replay, closeStage, foldStar, wake, renderer, camera, scene, get stage() { return stage; }, get acts() { return acts; }, get act3Ham() { return act3Ham; }, get star() { return star; }, get eggs() { return eggs; },
   idle: () => !raf, info: () => ({ calls: renderer.info.render.calls, tris: renderer.info.render.triangles, programs: renderer.info.programs.length }),
   gpu: () => { const gl = renderer.getContext(), e = gl.getExtension('WEBGL_debug_renderer_info'); return e ? gl.getParameter(e.UNMASKED_RENDERER_WEBGL) : '?'; } };
-if (new URLSearchParams(location.search).has('jump')) import('./jump.js?v=1103e');   // 测试用跳转按钮：网址带 ?jump 才装
+if (new URLSearchParams(location.search).has('jump')) import('./jump.js?v=1103f');   // 测试用跳转按钮：网址带 ?jump 才装

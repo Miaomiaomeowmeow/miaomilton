@@ -187,3 +187,4 @@ html.zh #ad .ad-line, html.zh #ad .ad-replay { font-style: normal; }
 /* 底条后面的淡光保留（11-03 退回最初版本） */
 #card { color: var(--card-ink, var(--bill-ink)); }   /* 底条（圆章 + 曲名 + 介绍）单独一个颜色，跟背景头发花纹分开（用户 11-03） */
 /* 11-03 试过钞票绿 / 红墨水，用户说不行，退回最初的橄榄墨色 */
+#card::before { display: none; }   /* 定稿（用户 11-03）：最初的橄榄墨色，不要底色——底条后面不垫光，圆章不填色 */

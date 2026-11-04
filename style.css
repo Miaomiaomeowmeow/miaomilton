@@ -189,3 +189,22 @@ html.zh #ad .ad-line, html.zh #ad .ad-replay { font-style: normal; }
 /* 11-03 试过钞票绿 / 红墨水，用户说不行，退回最初的橄榄墨色 */
 /* 定稿（用户 11-03）：最初的橄榄墨色，底条后面保留淡光，圆章不填色（「不要底色」= 圆章里那块纸色） */
 #card.no-song::before { right: 234px; }   /* 没有播放器时，淡光只罩圆章和文字两格（用户 11-03：右边空一块光很怪） */
+
+/* ── 求职官 11-03：品牌信息放早、放多 ── */
+#brand { position: fixed; left: 44px; top: 32px; z-index: 6; display: flex; flex-direction: column; align-items: flex-start; color: var(--bill-ink); text-decoration: none; }
+html:not([data-bg="bg-standalone"]) #brand { left: 180px; }   /* 街上版左上还有「回到街上」，往右让开 */
+#brand .b1 { font: 600 15px/1 Cinzel, Georgia, serif; letter-spacing: .32em; }
+#brand .b2 { margin-top: 5px; font: italic 500 15px/1 "Cormorant Garamond", "Songti SC", serif; }
+#brand .b3 { margin-top: 10px; padding: 7px 14px 8px; color: var(--bill-cream); background: var(--bill-ink); font: 600 10.5px/1 Cinzel, "Songti SC", serif; letter-spacing: .18em; clip-path: polygon(6% 0, 100% 0, 94% 100%, 0 100%); }
+#brand .b3 b { font-weight: 400; letter-spacing: 0; }
+#brand:hover .b3 { filter: brightness(1.18); }
+html.zh #brand .b2 { font-style: normal; }
+body:has(#album.on) #brand { opacity: 0; pointer-events: none; }
+#card-plug { margin-top: 5px !important; font: 600 10px/1.3 Cinzel, "Songti SC", serif !important; letter-spacing: .06em; white-space: nowrap; opacity: .72; text-transform: uppercase; }
+html.zh #card-plug { text-transform: none; letter-spacing: .05em; font-size: 12px !important; }
+#ad .ad-ten { margin-top: 10px; font: italic 600 22px "Cormorant Garamond", "Songti SC", serif; }
+#ad .ad-btns { display: flex; justify-content: center; gap: 14px; }
+#ad .ad-btn2 { color: var(--bill-ink); background: none; box-shadow: inset 0 0 0 1px var(--bill-ink); clip-path: none; }
+#ad .ad-links { display: flex; justify-content: center; align-items: baseline; gap: 12px; margin-top: 16px; }
+#ad .ad-links .ad-replay, #ad .ad-save { margin: 0; background: none; border: none; color: inherit; font: italic 500 17px "Cormorant Garamond", "Songti SC", serif; text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
+html.zh #ad .ad-ten, html.zh #ad .ad-save { font-style: normal; }

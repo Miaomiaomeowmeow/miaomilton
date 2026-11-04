@@ -23,7 +23,7 @@ export function stopStory() { clearInterval(timer); }
 
 // 星飞上天以后：广告页
 // 求职官 11-03：把「10 美元」这个点子讲出来——2016 年财政部决定把汉密尔顿留在 10 美元上；官方 #Ham4Ham 抽票正好是 10 美元一张
-export function showAd(en, onReplay, got) {
+export function showAd(en, onReplay, got, onKeep) {
   hideAd(); const L = (zh, e) => en ? e : zh;
   ad = document.createElement('div'); ad.id = 'ad';
   ad.innerHTML = `<div class="ad-box">
@@ -33,10 +33,11 @@ export function showAd(en, onReplay, got) {
     <div class="ad-line">${L('正在百老汇和世界各地上演', 'Now playing on Broadway and around the world')}</div>
     <div class="ad-ten">${L('你手里的 10 美元，也许就是一张《汉密尔顿》的票。', 'Your $10 could be a seat at Hamilton.')}</div>
     <div class="ad-btns"><a class="ad-btn" href="${TICKETS}" target="_blank" rel="noopener">${L('去官网买票', 'Get tickets')}<b>↗</b></a><a class="ad-btn ad-btn2" href="${LOTTERY}" target="_blank" rel="noopener">${L('试试 10 美元抽票', 'Try the $10 lottery')}<b>↗</b></a></div>
-    <div class="ad-links"><button class="ad-save" type="button">${L('存一张明信片，发给朋友', 'Save a postcard to share')}</button><span>·</span><button class="ad-replay" type="button">${L('再看一遍', 'Play again')}</button></div>
+    <div class="ad-links"><button class="ad-save" type="button">${L('存一张明信片，发给朋友', 'Save a postcard to share')}</button><span>·</span><button class="ad-replay" type="button">${L('再看一遍', 'Play again')}</button>${got && got.length < 5 && onKeep ? `<span>·</span><button class="ad-keep" type="button">${L(`接着找 · 找到 ${got.length}/5 个彩蛋`, `Keep exploring · ${got.length}/5 found`)}</button>` : ''}</div>
     <div class="ad-fine">${L('Miaomiao 的同人作品 · 与官方制作无关', 'A fan work by Miaomiao · not affiliated with the official production')}</div>
   </div>`;
   ad.querySelector('.ad-replay').addEventListener('click', e => { e.stopPropagation(); hideAd(); onReplay(); });
+  const keep = ad.querySelector('.ad-keep'); if (keep) keep.addEventListener('click', e => { e.stopPropagation(); hideAd(); onKeep(); });   // 接着找：回到钞票，找到的和看过的都留着（求职官 11-03 第 4 条）
   ad.querySelectorAll('.ad-btn').forEach(b => b.addEventListener('click', e => e.stopPropagation()));
   ad.querySelector('.ad-save').addEventListener('click', e => { e.stopPropagation(); savePostcard(en, got || []); });
   document.body.appendChild(ad); requestAnimationFrame(() => ad && ad.classList.add('on'));

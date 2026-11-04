@@ -208,3 +208,32 @@ html.zh #card-plug { text-transform: none; letter-spacing: .05em; font-size: 12p
 #ad .ad-links { display: flex; justify-content: center; align-items: baseline; gap: 12px; margin-top: 16px; }
 #ad .ad-links .ad-replay, #ad .ad-save { margin: 0; background: none; border: none; color: inherit; font: italic 500 17px "Cormorant Garamond", "Songti SC", serif; text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
 html.zh #ad .ad-ten, html.zh #ad .ad-save { font-style: normal; }
+
+/* ── 求职官 11-03 第二轮：左上剧目牌放大 + 买票牌子 A / B 两个小样（html[data-tix="stub"] = B 票根），一幕演完冒一行，Skip to the end ── */
+#brand .b1 { font-size: 20px; letter-spacing: .3em; }
+#brand .b2 { font-size: 17px; margin-top: 6px; }
+#brand .b4 { margin-top: 5px; font: 600 10px/1 Cinzel, "Songti SC", serif; letter-spacing: .16em; opacity: .75; }
+html.zh #brand .b4 { font-size: 12px; letter-spacing: .08em; }
+#brand .b3 { position: relative; margin-top: 12px; min-width: 150px; height: 38px; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 0 18px;
+  font: 600 13.5px/1 Cinzel, "Songti SC", serif; letter-spacing: .22em; clip-path: polygon(4% 0, 100% 0, 96% 100%, 0 100%); }   /* A：跟广告页 Get tickets 同一颗实心按钮 */
+html.zh #brand .b3 { letter-spacing: .12em; font-size: 14px; }
+html[data-tix="stub"] #brand .b3 { clip-path: none; padding: 0 34px 0 16px;   /* B：一张小票根，右边一排小圆孔当撕线，左右两边各咬一个半圆缺口 */
+  -webkit-mask: radial-gradient(circle 6px at 0 50%, #0000 98%, #000) left / 51% 100% no-repeat, radial-gradient(circle 6px at 100% 50%, #0000 98%, #000) right / 51% 100% no-repeat;
+          mask: radial-gradient(circle 6px at 0 50%, #0000 98%, #000) left / 51% 100% no-repeat, radial-gradient(circle 6px at 100% 50%, #0000 98%, #000) right / 51% 100% no-repeat; }
+html[data-tix="stub"] #brand .b3::after { content: ""; position: absolute; right: 22px; top: 5px; bottom: 5px; border-left: 2px dotted var(--bill-cream); opacity: .8; }
+#card-plug { white-space: normal; }
+#card-plug a { color: inherit; text-decoration: underline; text-underline-offset: 3px; font-weight: 700; white-space: nowrap; opacity: 1; }
+#card-plug a:hover { text-decoration-thickness: 2px; }
+#curtain-call { position: fixed; left: 50%; bottom: 172px; transform: translate(-50%, 6px); z-index: 5; margin: 0; padding: 6px 22px; white-space: nowrap; color: var(--bill-ink);
+  font: italic 500 18px "Cormorant Garamond", "Songti SC", serif; opacity: 0; pointer-events: none; transition: opacity .6s, transform .6s;
+  background: radial-gradient(ellipse at 50% 50%, var(--wash-a) 0%, var(--wash-b) 60%, transparent 100%); }
+#curtain-call.on { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
+#curtain-call a { color: inherit; font: 600 13px Cinzel, "Songti SC", serif; letter-spacing: .16em; text-underline-offset: 4px; }
+html.zh #curtain-call { font-style: normal; }
+#skip::before { background: rgba(168, 153, 108, .33); clip-path: polygon(6% 0, 100% 0, 94% 100%, 0 100%); }   /* 跟 Sound 一样低调，不用深底 */
+body.finale-on #skip { opacity: 0; pointer-events: none; }
+#album .al-skip { font: italic 500 17px "Cormorant Garamond", "Songti SC", serif; text-decoration: underline; text-underline-offset: 4px; cursor: pointer; pointer-events: auto; }
+html.zh #album .al-skip { font-style: normal; }
+#ad .ad-keep { margin: 0; background: none; border: none; color: inherit; font: italic 500 17px "Cormorant Garamond", "Songti SC", serif; text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
+html.zh #ad .ad-keep { font-style: normal; }
+#keys #skip { position: absolute; right: 0; top: 48px; }   /* 放在那排键下面一行、靠右：放进同一排会把 EN / 中 挤到刮刮条上 */

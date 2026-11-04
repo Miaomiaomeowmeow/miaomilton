@@ -1,11 +1,11 @@
 import * as THREE from 'three';
-import { BILL, SPOTS, ACTS, EGGS } from './scenes.js?v=1103o';
-import { createStage, createEggs, loadStageBytes } from './stage-test.js?v=1103o';   // 纸舞台（ham-stage 对话做的，接口见 blender/stage/接口.md）
-import { createStar } from './finale.js?v=1103o';   // 结尾折星（ham-star 对话做的，接口见 blender/star/接口.md）
-import { createPeople, INK_GLSL, ERASE_GLSL, peopleUniforms } from './people.js?v=1103o';
-import { openAlbum, closeAlbum, albumOpen } from './album.js?v=1103o';   // 邮票册（点右上 Stamps，用户 11-03 定稿）
-import { playStory, stopStory, showAd, hideAd, adOpen } from './curtain.js?v=1103o';   // 结尾：折星时放歌 + 介绍，飞上天后广告页（用户 11-03）   // 邮票册（点右上 Stamps，用户 11-03 定稿）
-import { createActs, ACT_SEC } from './acts.js?v=1103o';   // 主线三幕舞台上的剪影（ham-star 对话做的，接口见 blender/acts/接口.md）   // 彩蛋③ We the People（ham-star 对话做的，接口见 blender/people/接口.md）
+import { BILL, SPOTS, ACTS, EGGS } from './scenes.js?v=1103q';
+import { createStage, createEggs, loadStageBytes } from './stage-test.js?v=1103q';   // 纸舞台（ham-stage 对话做的，接口见 blender/stage/接口.md）
+import { createStar } from './finale.js?v=1103q';   // 结尾折星（ham-star 对话做的，接口见 blender/star/接口.md）
+import { createPeople, INK_GLSL, ERASE_GLSL, peopleUniforms } from './people.js?v=1103q';
+import { openAlbum, closeAlbum, albumOpen } from './album.js?v=1103q';   // 邮票册（点右上 Stamps，用户 11-03 定稿）
+import { playStory, stopStory, showAd, hideAd, adOpen } from './curtain.js?v=1103q';   // 结尾：折星时放歌 + 介绍，飞上天后广告页（用户 11-03）   // 邮票册（点右上 Stamps，用户 11-03 定稿）
+import { createActs, ACT_SEC } from './acts.js?v=1103q';   // 主线三幕舞台上的剪影（ham-star 对话做的，接口见 blender/acts/接口.md）   // 彩蛋③ We the People（ham-star 对话做的，接口见 blender/people/接口.md）
 
 const perf = window.__perf = { t0: performance.now(), frames: [], longTasks: [], marks: {} };
 try { new PerformanceObserver(l => l.getEntries().forEach(e => perf.longTasks.push({ at: Math.round(e.startTime), ms: Math.round(e.duration) }))).observe({ type: 'longtask', buffered: true }); } catch (e) {}
@@ -431,7 +431,7 @@ function draw() {
   if (state.starT0) {
     const t = now - state.starT0;
     star.set(clamp01(t / star.foldMs), clamp01((t - star.foldMs - 300) / star.riseMs));
-    if (t > star.foldMs + 300 + star.riseMs) { state.starT0 = 0; state.phase = 'done'; mark('finaleDone'); stopStory(); showAd(LANG_EN, replay, Object.keys(state.found || {}).filter(k => state.found[k])); }   // 星飞上天：出广告页；底条和 Spotify 留着（歌还在放，版权要看得见）
+    if (t > star.foldMs + 300 + star.riseMs) { state.starT0 = 0; state.phase = 'done'; mark('finaleDone'); stopStory(); showAd(LANG_EN, () => replay(), Object.keys(state.found || {}).filter(k => state.found[k]), () => replay(true)); }   // 星飞上天：出广告页；底条和 Spotify 留着（歌还在放，版权要看得见）
     busy = true;
   }
   // 彩蛋③：红字一笔笔卷成纸条叠到印章上（约 5.8 秒）；关掉卡片时倒着收回去（快一倍）
@@ -514,8 +514,8 @@ function draw() {
   // 都探索完了（彩蛋卡片关上、没在动画中）：浮出折纸虚线和金星，提示一句
   if (!state.endShown && state.phase === 'idle' && !active && !state.popT0 && !state.unpopT0 && allExplored()) {
     state.endShown = true; idleLoadStar();   // 金星出来了：画面空闲时先把折星装好，点金星不用等
-    if (state.popped) showTip('三幕看完、找到三个彩蛋了！点汉密尔顿收起舞台，再点钞票正中的金星，折成星', 'Three acts and three hidden scenes! Click Hamilton to fold the stage away, then the gold star to finish');
-    else showTip('三幕看完、找到三个彩蛋了！点钞票正中的金星，折成星', 'Three acts and three hidden scenes! Click the gold star in the middle to finish');
+    if (state.popped) showTip('都探索完了！点汉密尔顿收起舞台，再点钞票正中的金星，折成星', 'You found everything! Click Hamilton to fold the stage away, then the gold star to finish');
+    else showTip('都探索完了！点钞票正中的金星，折成星', 'You found everything! Click the gold star in the middle to finish');
   }
   // 结尾：折纸虚线 + 金星浮出 / 淡掉；平放（舞台合着）时点金星：翻回正面、虚线淡掉，同一帧换成星
   const endTo = state.endShown && !state.folding ? 1 : 0;
@@ -700,14 +700,29 @@ async function popUp() {
 }
 function closeStage(then) {   // 舞台立着时要翻面：先把三幕的人收回、舞台合上，合完再翻（用户 10-24：打开正面以后到不了背面）
   if (!state.popped || state.unpopT0) return;
+  if (active && active.key === 'portrait' && active.act >= 0) curtainCall(active.act);   // 收起舞台 = 这一幕演完
   closeCard(); $('#acts').hidden = true; document.body.classList.remove('acts-open'); hideTip(true);
   state.yaw = state.pitch = 0; state.spinT0 = 0; state.fwd = null; if (stage) stage.turntable.rotation.y = 0;
   if (acts) { for (const k in acts.prog) acts.set(k, 0); state.actTo = null; }
   state.closeOnly = true; state.afterClose = then; state.unpopT0 = performance.now(); wake();
 }
+const called = {};
+function curtainCall(i) {   // 一幕演完的那一刻，舞台下方冒一行字（求职官 11-03 第 3 条：观众最投入的时候讲买票；不是弹窗，每幕一次，4 秒淡掉）
+  if (called[i] || state.folding) return; called[i] = true;
+  let el = $('#curtain-call'); if (!el) { el = document.createElement('p'); el.id = 'curtain-call'; document.body.appendChild(el); }
+  const t = shortTitle(L1(ACTS[i].zh, ACTS[i].en)), a = `<a href="${TICKETS_URL}" target="_blank" rel="noopener">${L1('去官网买票', 'Get tickets')} &#8599;</a>`;
+  el.innerHTML = L1(`《${t}》演完了。去现场看完整的剧 · ${a}`, `That was “${t}.” See the whole show live · ${a}`);
+  el.classList.add('on'); clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('on'), 4000);
+}
+function skipToEnd() {   // 右上角 Skip to the end（用户 11-03：门槛不降，但要能直接看结尾——招聘方只有一分钟）：照常折星、放歌，再到广告页
+  if (state.folding || state.phase !== 'idle' || state.popT0 || state.unpopT0) return;
+  if (albumOpen()) closeAlbum(true);
+  if (active && active.key !== 'portrait') closeCard();
+  foldStar();
+}
 function foldStar() {   // 点金星：舞台立着就先合上再折；平放就翻回正面直接折（正反面都能点）
   if (state.phase !== 'idle' || state.popT0 || state.unpopT0 || state.folding) return;
-  state.folding = true; state.starHover = false; clearTimeout(tipTimer); $('#tip').hidden = true;   // 折星时收起提示纸条，重来时再出来
+  state.folding = true; state.starHover = false; clearTimeout(tipTimer); $('#tip').hidden = true; document.body.classList.add('finale-on');   // 折星时收起提示纸条和 Skip，重来时再出来
   if (state.popped) { startFinale(); return; }
   closeCard(); playStory(fillCard, LANG_EN); $('#acts').hidden = true; document.body.classList.remove('acts-open');
   state.yaw = state.pitch = 0; state.flipTo = 0;
@@ -715,21 +730,24 @@ function foldStar() {   // 点金星：舞台立着就先合上再折；平放�
 }
 function startFinale() {   // 主线演完：舞台合上 → 钞票摆正 → 换成星 → 折成星 → 往上飞
   if (!state.popped || state.unpopT0) return;
-  closeCard(); playStory(fillCard, LANG_EN); $('#acts').hidden = true; document.body.classList.remove('acts-open'); state.folding = true; clearTimeout(tipTimer); $('#tip').hidden = true;   // 折星时收起提示纸条，底条换成这部剧的介绍、放终曲
+  closeCard(); playStory(fillCard, LANG_EN); $('#acts').hidden = true; document.body.classList.remove('acts-open'); state.folding = true; clearTimeout(tipTimer); $('#tip').hidden = true; document.body.classList.add('finale-on');   // 折星时收起提示纸条，底条换成这部剧的介绍、放终曲
   state.flipTo = 0; state.yaw = state.pitch = 0; state.spinT0 = 0;
   if (acts) { for (const k in acts.prog) acts.set(k, 0); state.actTo = null; }   // 舞台合上之前，三幕的人先全部收回
   loadStar().then(() => { state.unpopT0 = performance.now(); state.phase = 'finale'; wake(); });
 }
-function replay() {   // 结尾看完：点一下回到钞票（大场景做好后改成回到街上）
+function replay(keep) {   // 结尾看完：点一下回到钞票（大场景做好后改成回到街上）；keep = Keep exploring，找到的彩蛋和看过的幕都留着
   if (state.phase !== 'done') return;
-  hideAd(); stopStory(); stop(); $('#card').hidden = false; cardData = null; renderCard();
-  state.folding = false; state.endShown = false; uniforms.uEnd.value = 0; state.visited = {}; state.found = {}; state.foundOrder = [];   // 重来：从头探索
+  hideAd(); stopStory(); stop(); $('#card').hidden = false; cardData = null; renderCard(); document.body.classList.remove('finale-on');
+  state.folding = false; state.endShown = false; uniforms.uEnd.value = 0; if (!keep) { state.visited = {}; state.found = {}; state.foundOrder = []; for (const k in called) delete called[k]; }   // 重来：从头探索；Keep exploring 时保留
+
+  $('#stamp-n').textContent = nFound() + '/5';
   star.root.visible = false; star.set(0, 0); pivot.visible = true;
   uniforms.uSil.value = 0; uniforms.uWrite.value = 0; uniforms.uFold1.value = uniforms.uFold2.value = 0; pivot.position.set(0, 0, 0); pivot.rotation.z = 0; state.camK = 0; printCam(0);   // 重看一遍也跟开场一样：平放的钞票，镜头从上面转过来
   const end = $('#acts .end'); if (end) end.remove();
   state.phase = 'print'; state.t0 = performance.now(); wake();
 }
 function showAct(i) {
+  if (active && active.key === 'portrait' && active.act >= 0 && active.act !== i) curtainCall(active.act);   // 转到下一幕 = 上一幕演完
   const a = ACTS[i];
   state.visited = state.visited || {}; state.visited[i] = true;
   if (state.popped) actTargets(i);
@@ -740,7 +758,7 @@ function showAct(i) {
   active = { key: 'portrait', act: i };
   $('#acts').hidden = false; document.body.classList.add('acts-open');
   document.querySelectorAll('#acts button').forEach((b, j) => b.setAttribute('aria-pressed', j === i));
-  fillCard({ num: a.no, ring: `THE ${['FIRST', 'SECOND', 'THIRD'][i]} ACT · OF THREE · `, ringZh: `第${'一二三'[i]}幕 · 共三幕 · `, zh: a.zh, en: a.en, line: a.line, lineEn: a.lineEn, track: a.track });
+  fillCard({ num: a.no, ring: `THE ${['FIRST', 'SECOND', 'THIRD'][i]} ACT · OF THREE · `, ringZh: `第${'一二三'[i]}幕 · 共三幕 · `, zh: a.zh, en: a.en, line: a.line, lineEn: a.lineEn, track: a.track, plug: ACT_PLUG[i] });
 }
 // ---------- 下条：正在放（三格：圆章 | 曲名 + 一句介绍 | 播放器，位置固定，换画面只换内容） ----------
 const ROMAN = ['I', 'II', 'III', 'IV', 'V'];
@@ -752,6 +770,8 @@ const EGG_PLUG = {   // 每个彩蛋带一句剧的信息（求职官 11-03 第 
   treasury: ['第二幕的歌，去百老汇现场听。', 'From Act Two — hear it live on Broadway.'],
   watermark: ['全剧最后一首歌，去百老汇现场听。', 'The show’s final song — hear it live on Broadway.'],
 };
+const ACT_PLUG = [['开场曲，去百老汇现场听。', 'The opening number — hear it live on Broadway.'], ['第一幕的歌，去百老汇现场听。', 'From Act One — hear it live on Broadway.'], ['第一幕的歌，去百老汇现场听。', 'From Act One — hear it live on Broadway.']];   // 三幕跟彩蛋同一行同一个写法（求职官 11-03）
+const TICKETS_URL = 'https://hamiltonmusical.com/';
 const RING_WHERE = { torch: ['火炬', 'THE TORCH'], people: ['手写的 We the People', 'WE THE PEOPLE'], ten: ['会变色的 10', 'THE SHIFTING TEN'], watermark: ['水印', 'THE WATERMARK'], treasury: ['财政部大楼', 'THE TREASURY'] };   // 圆章环上写它藏在哪（要短，一圈放得下）
 let cardData = null;
 function idleCard() {   // 没在演、没开彩蛋：下条讲钞票本身
@@ -775,7 +795,7 @@ function renderCard() {
   card.classList.toggle('no-song', !c.track);
   $('#card-title').textContent = shortTitle(L1(c.zh, c.en));
   $('#card-line').textContent = shortLine(L1(c.line, c.lineEn), !!c.plug);
-  const plug = $('#card-plug'); plug.textContent = c.plug ? L1(c.plug[0], c.plug[1]) : ''; plug.hidden = !c.plug;
+  const plug = $('#card-plug'); plug.innerHTML = c.plug ? `<span>${L1(c.plug[0], c.plug[1])}</span> <a href="${TICKETS_URL}" target="_blank" rel="noopener">${L1('去官网买票', 'Get tickets')} &#8599;</a>` : ''; plug.hidden = !c.plug;   // 那一行后面接买票链接（求职官 11-03 第 2 条：不另加按钮，免得跟 Spotify 抢）
   drawSeal(c.num, L1(c.ringZh, c.ring), c.img); fitTitle();
 }
 function fitTitle() {   // 曲名太长就缩小，不超出 340 的格子
@@ -867,7 +887,7 @@ function turnTip() {}   // 第三幕倒带完：先不提示（各种指引等�
 const nFound = () => ['torch', 'people', 'ten', 'watermark', 'treasury'].filter(k => (state.found || {})[k]).length;
 function allExplored() {   // 三幕都看过 + 正面 火炬 / 红字 / 10 + 背面 水印 / 大楼
   const v = state.visited || {}, f = state.found || {};
-  return [0, 1, 2].every(i => v[i]) && nFound() >= 3;   // 求职官 11-03 第 6 条：三幕 + 任意三个彩蛋就能折星（以前要五个全找到，大多数人走不到结尾的广告页）；剩下的邮票册里还能接着找
+  return [0, 1, 2].every(i => v[i]) && nFound() >= 5;   // 用户 11-03：门槛不降，还是要找全五个；赶时间的人用右上角 Skip to the end
 }
 function autoRewind() {   // 6 秒没人拖：转台自己倒转一圈，这一段一定看得到
   if (state.act !== 2 || !state.rewind || state.rewind.done || state.rewind.acc > .05) return;   // 已经转回第二幕就不自己倒带
@@ -901,7 +921,7 @@ function baseTip() {   // 上条正中的提示（用户 11-03：写全，做过
     if (state.rewind && !state.rewind.done) return [`往右拖或往上滚，时间倒回去${SEP}${fold[0]}`, `drag right or scroll up to rewind${SEP}${fold[1]}`];
     return state.endShown ? [`演完了${SEP}${fold[0]}，再点金星`, `the show is over${SEP}${fold[1]}, then the gold star`] : [`演完了${SEP}${fold[0]}`, `the show is over${SEP}${fold[1]}`];
   }
-  if (state.endShown) return ['点钞票正中的金星，折成一颗星 · 没找到的彩蛋还能接着找', 'click the gold star to fold the note · or keep looking for the rest'];
+  if (state.endShown) return ['都找到了 · 点钞票正中的金星，折成一颗星', 'all found · click the gold star to fold the note'];
   if (state.flipTo) return [`${X(f.watermark, '找：对着光看左边的水印')}${SEP}${X(f.treasury, '找：财政部大楼')}${SEP}点弯下来的角，翻回正面`,   // 做过的整句划掉（用户 11-03：find the torch 三个词一起划）
     `${X(f.watermark, 'find the watermark (hold it to the light)')}${SEP}${X(f.treasury, 'find the building')}${SEP}the bent corner flips it back`];
   return [`${X(allActs, '点头像开场')}${SEP}${X(f.torch, '找火炬')}${SEP}${X(f.people, '找 We the People')}${SEP}${X(f.ten, '找会变色的 10')}${SEP}点卷起的角，翻到背面`,
@@ -991,10 +1011,12 @@ function refreshTip(force) {   // 状态变了就换「现在能做什么」，�
 function showAlbum() {   // 邮票册：五个彩蛋 + 三幕，按实际找到、看过的来画
   const f = state.found || {}, v = state.visited || {}, eggTitle = {};
   for (const k in EGGS) eggTitle[k] = shortTitle(L1(EGGS[k].zh, EGGS[k].en));
-  openAlbum({ en: LANG_EN, found: f, eggTitle, acts: ACTS.map((a, i) => ({ no: a.no, title: L1(a.zh, a.en), seen: !!v[i] })) }, () => $('#stamps').setAttribute('aria-expanded', false));
+  openAlbum({ en: LANG_EN, onSkip: state.folding ? null : skipToEnd, found: f, eggTitle, acts: ACTS.map((a, i) => ({ no: a.no, title: L1(a.zh, a.en), seen: !!v[i] })) }, () => $('#stamps').setAttribute('aria-expanded', false));
   $('#stamps').setAttribute('aria-expanded', true);
 }
 $('#stamps').addEventListener('click', () => albumOpen() ? closeAlbum() : showAlbum());
+
+$('#skip').addEventListener('click', skipToEnd);
 let muted = false, foundTimer = 0;
 $('#sound').addEventListener('click', () => {
   muted = !muted; $('#sound').classList.toggle('off', muted); $('#sound').setAttribute('aria-pressed', muted);
@@ -1004,12 +1026,12 @@ function setLangKeys() {
   document.documentElement.classList.toggle('zh', !LANG_EN);
   $('#lang').innerHTML = LANG_EN ? 'EN / <span class="off">中</span>' : '<span class="off">EN</span> / 中';
   $('#brand .b2').textContent = L1('一部美国音乐剧', 'An American Musical'); $('#brand .b3').firstChild.textContent = L1('去官网买票 ', 'Get tickets ');
-  $('#street .w').textContent = L1('回到街上', 'Street'); $('#sound .w').textContent = L1('声音', 'Sound'); $('#stamps .w').textContent = L1('邮票册', 'Stamps');
+  $('#street .w').textContent = L1('回到街上', 'Street'); $('#sound .w').textContent = L1('声音', 'Sound'); $('#stamps .w').textContent = L1('邮票册', 'Stamps'); $('#skip .w').textContent = L1('直接看结尾 →', 'Skip to the end →'); $('#brand .b4').textContent = L1('11 项托尼奖 · 普利策戏剧奖', '11 Tony Awards · Pulitzer Prize');
 }
 $('#lang').addEventListener('click', () => {
   LANG_EN = !LANG_EN; try { localStorage.setItem('ham-lang', LANG_EN ? 'en' : 'zh'); } catch (e) {}
   scratchReady = false; setLangKeys(); renderCard(); setTipText(...tipPair); refreshTip(true);   // 换语言：刮刮条上的字也重画
-  if (adOpen()) showAd(LANG_EN, replay, Object.keys(state.found || {}).filter(k => state.found[k]));   // 广告页、邮票册开着时也换成新语言（用户 11-03：中文版 Get tickets 没变成中文）
+  if (adOpen()) showAd(LANG_EN, () => replay(), Object.keys(state.found || {}).filter(k => state.found[k]), () => replay(true));   // 广告页、邮票册开着时也换成新语言（用户 11-03：中文版 Get tickets 没变成中文）
   if (albumOpen()) { closeAlbum(true); showAlbum(); }
 });
 setLangKeys();
@@ -1078,4 +1100,4 @@ $('#credits-close').addEventListener('click', () => $('#credits').close());
 window.__ham = { renderCard: () => renderCard(), state, uniforms, aim: aimCamera, open, flip, showAct, closeCard, popUp, startFinale, replay, closeStage, foldStar, wake, renderer, camera, scene, get stage() { return stage; }, get acts() { return acts; }, get act3Ham() { return act3Ham; }, get star() { return star; }, get eggs() { return eggs; },
   idle: () => !raf, info: () => ({ calls: renderer.info.render.calls, tris: renderer.info.render.triangles, programs: renderer.info.programs.length }),
   gpu: () => { const gl = renderer.getContext(), e = gl.getExtension('WEBGL_debug_renderer_info'); return e ? gl.getParameter(e.UNMASKED_RENDERER_WEBGL) : '?'; } };
-if (new URLSearchParams(location.search).has('jump')) import('./jump.js?v=1103o');   // 测试用跳转按钮：网址带 ?jump 才装
+if (new URLSearchParams(location.search).has('jump')) import('./jump.js?v=1103q');   // 测试用跳转按钮：网址带 ?jump 才装

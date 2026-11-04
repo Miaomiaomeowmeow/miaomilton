@@ -56,6 +56,7 @@ export function openAlbum(data, closeCb) {
     add('al-tk', `${ticket(a.seen, ink, paper)}<div class="al-tk-t"><b>${L('第 ' + a.no + ' 幕', 'ACT ' + a.no)}</b><span${long ? ' class="long"' : ''}>${a.title}</span></div>`, `left:${x}px;top:446px`);
   });
   add('al-t al-it', `${line}${data.en ? `${NUM[nSeen]} of three seen` : `看过 ${NUM_ZH[nSeen]} 幕，共三幕`}${line}`, 'left:500px;top:560px');
+  if (data.onSkip && (nFound < 5 || nSeen < 3)) add('al-t al-skip', L('不想找了？直接看结尾 →', 'No time? Skip to the end →'), 'left:500px;top:606px').addEventListener('click', () => { closeAlbum(true); data.onSkip(); });   // 找不到彩蛋的人会来翻邮票册（求职官 11-03）
   root.addEventListener('click', e => { if (e.target === root) closeAlbum(); });   // 点空白处关上
   document.body.appendChild(root);
   const fit = () => { const s = Math.min(innerWidth / 1100, innerHeight / 700); box.style.transform = `translate(-50%,-50%) scale(${s})`; };

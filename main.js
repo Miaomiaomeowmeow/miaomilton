@@ -1,11 +1,11 @@
 import * as THREE from 'three';
-import { BILL, SPOTS, ACTS, EGGS } from './scenes.js?v=1103c';
-import { createStage, createEggs, loadStageBytes } from './stage-test.js?v=1103c';   // 纸舞台（ham-stage 对话做的，接口见 blender/stage/接口.md）
-import { createStar } from './finale.js?v=1103c';   // 结尾折星（ham-star 对话做的，接口见 blender/star/接口.md）
-import { createPeople, INK_GLSL, ERASE_GLSL, peopleUniforms } from './people.js?v=1103c';
-import { openAlbum, closeAlbum, albumOpen } from './album.js?v=1103c';   // 邮票册（点右上 Stamps，用户 11-03 定稿）
-import { playStory, stopStory, showAd, hideAd } from './curtain.js?v=1103c';   // 结尾：折星时放歌 + 介绍，飞上天后广告页（用户 11-03）   // 邮票册（点右上 Stamps，用户 11-03 定稿）
-import { createActs, ACT_SEC } from './acts.js?v=1103c';   // 主线三幕舞台上的剪影（ham-star 对话做的，接口见 blender/acts/接口.md）   // 彩蛋③ We the People（ham-star 对话做的，接口见 blender/people/接口.md）
+import { BILL, SPOTS, ACTS, EGGS } from './scenes.js?v=1103d';
+import { createStage, createEggs, loadStageBytes } from './stage-test.js?v=1103d';   // 纸舞台（ham-stage 对话做的，接口见 blender/stage/接口.md）
+import { createStar } from './finale.js?v=1103d';   // 结尾折星（ham-star 对话做的，接口见 blender/star/接口.md）
+import { createPeople, INK_GLSL, ERASE_GLSL, peopleUniforms } from './people.js?v=1103d';
+import { openAlbum, closeAlbum, albumOpen } from './album.js?v=1103d';   // 邮票册（点右上 Stamps，用户 11-03 定稿）
+import { playStory, stopStory, showAd, hideAd } from './curtain.js?v=1103d';   // 结尾：折星时放歌 + 介绍，飞上天后广告页（用户 11-03）   // 邮票册（点右上 Stamps，用户 11-03 定稿）
+import { createActs, ACT_SEC } from './acts.js?v=1103d';   // 主线三幕舞台上的剪影（ham-star 对话做的，接口见 blender/acts/接口.md）   // 彩蛋③ We the People（ham-star 对话做的，接口见 blender/people/接口.md）
 
 const perf = window.__perf = { t0: performance.now(), frames: [], longTasks: [], marks: {} };
 try { new PerformanceObserver(l => l.getEntries().forEach(e => perf.longTasks.push({ at: Math.round(e.startTime), ms: Math.round(e.duration) }))).observe({ type: 'longtask', buffered: true }); } catch (e) {}
@@ -778,13 +778,16 @@ function drawSeal(num, ring, img) {   // 照真钞印章：外圈锯齿 → 一�
   const cx = 62, R = 60, rr = R - 20; let teeth = '';
   for (let i = 0; i <= 144; i++) { const t = i / 144 * 2 * Math.PI, r = i % 2 ? R - 4 : R; teeth += (i ? 'L' : 'M') + (cx + r * Math.cos(t)).toFixed(1) + ' ' + (cx + r * Math.sin(t)).toFixed(1); }
   const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
-  const cs = getComputedStyle(document.documentElement), INK = cs.getPropertyValue('--bill-ink').trim() || '#4a4532', PAPER = cs.getPropertyValue('--bill-paper').trim() || '#ebe2c4';   // 街上版深色、独立网站米黄，颜色跟着 CSS 走
-  $('#card-seal').innerHTML = `<path d="${teeth}Z" fill="none" stroke="${INK}" stroke-width=".8"/><circle cx="${cx}" cy="${cx}" r="${R - 7}" fill="none" stroke="${INK}"/>`
+  const cs = getComputedStyle(document.documentElement), INK = cs.getPropertyValue('--card-ink').trim() || cs.getPropertyValue('--bill-ink').trim() || '#4a4532', PAPER = cs.getPropertyValue('--bill-paper').trim() || '#ebe2c4';   // 圆章单独一个颜色（用户 11-03：跟头发花纹混在一起 → 换色），街上版跟着 CSS 走
+  const SV = document.documentElement.dataset.seal || 'solid';   // 定 A：实心绿章、字反白（用户 11-03）   // 小样对比用：solid = 实心印章（字反白）；pad = 后面垫一小圈纸色
+  const FILL = SV === 'solid' ? INK : 'none', LINE = SV === 'solid' ? PAPER : INK;
+  $('#card-seal').innerHTML = (SV === 'pad' ? `<defs><radialGradient id="seal-pad"><stop offset="0" stop-color="${PAPER}" stop-opacity=".95"/><stop offset=".78" stop-color="${PAPER}" stop-opacity=".9"/><stop offset="1" stop-color="${PAPER}" stop-opacity="0"/></radialGradient></defs><circle cx="${cx}" cy="${cx}" r="${R + 2}" fill="url(#seal-pad)"/>` : '')
+    + `<path d="${teeth}Z" fill="${FILL}" stroke="${INK}" stroke-width=".8"/><circle cx="${cx}" cy="${cx}" r="${R - 7}" fill="none" stroke="${LINE}"/>`
     + `<path id="seal-ring" d="M${cx - rr} ${cx} a${rr} ${rr} 0 1 1 ${2 * rr} 0 a${rr} ${rr} 0 1 1 ${-2 * rr} 0" fill="none"/>`
-    + `<text font-family="Cinzel, Songti SC, serif" font-weight="600" font-size="9.5" fill="${INK}"><textPath href="#seal-ring" textLength="${(2 * Math.PI * rr - 4).toFixed(1)}" lengthAdjust="spacing">${esc(ring)}</textPath></text>`
-    + `<circle cx="${cx}" cy="${cx}" r="${R - 24}" fill="none" stroke="${INK}" stroke-width=".9"/><circle cx="${cx}" cy="${cx}" r="${R - 27}" fill="none" stroke="${INK}" stroke-width=".4"/>`
+    + `<text font-family="Cinzel, Songti SC, serif" font-weight="600" font-size="9.5" fill="${LINE}"><textPath href="#seal-ring" textLength="${(2 * Math.PI * rr - 4).toFixed(1)}" lengthAdjust="spacing">${esc(ring)}</textPath></text>`
+    + `<circle cx="${cx}" cy="${cx}" r="${R - 24}" fill="none" stroke="${LINE}" stroke-width=".9"/><circle cx="${cx}" cy="${cx}" r="${R - 27}" fill="none" stroke="${LINE}" stroke-width=".4"/>`
     + (img ? `<clipPath id="seal-pic"><circle cx="${cx}" cy="${cx}" r="${R - 28}"/></clipPath><image href="${img}" x="${cx - R + 28}" y="${cx - R + 28}" width="${2 * (R - 28)}" height="${2 * (R - 28)}" preserveAspectRatio="xMidYMid slice" clip-path="url(#seal-pic)"/>`
-      : `<text x="${cx}" y="${cx + 1}" text-anchor="middle" dominant-baseline="central" font-family="Cinzel, Georgia, serif" font-weight="600" font-size="${num.length > 2 ? 26 : 36}" fill="${INK}">${esc(num)}</text>`);
+      : `<text x="${cx}" y="${cx + 1}" text-anchor="middle" dominant-baseline="central" font-family="Cinzel, Georgia, serif" font-weight="600" font-size="${num.length > 2 ? 26 : 36}" fill="${LINE}">${esc(num)}</text>`);
 }
 function fillCard(c) {
   cardData = c; renderCard(); document.body.classList.add('card-open');
@@ -1059,7 +1062,7 @@ function placePlayer() {
 // 用户 10-23：角上的「声音与版权」按钮先不放；说明文字留在 index.html 的 #credits 里，正式发布前另想放法
 $('#credits-close').addEventListener('click', () => $('#credits').close());
 
-window.__ham = { state, uniforms, aim: aimCamera, open, flip, showAct, closeCard, popUp, startFinale, replay, closeStage, foldStar, wake, renderer, camera, scene, get stage() { return stage; }, get acts() { return acts; }, get act3Ham() { return act3Ham; }, get star() { return star; }, get eggs() { return eggs; },
+window.__ham = { renderCard: () => renderCard(), state, uniforms, aim: aimCamera, open, flip, showAct, closeCard, popUp, startFinale, replay, closeStage, foldStar, wake, renderer, camera, scene, get stage() { return stage; }, get acts() { return acts; }, get act3Ham() { return act3Ham; }, get star() { return star; }, get eggs() { return eggs; },
   idle: () => !raf, info: () => ({ calls: renderer.info.render.calls, tris: renderer.info.render.triangles, programs: renderer.info.programs.length }),
   gpu: () => { const gl = renderer.getContext(), e = gl.getExtension('WEBGL_debug_renderer_info'); return e ? gl.getParameter(e.UNMASKED_RENDERER_WEBGL) : '?'; } };
-if (new URLSearchParams(location.search).has('jump')) import('./jump.js?v=1103c');   // 测试用跳转按钮：网址带 ?jump 才装
+if (new URLSearchParams(location.search).has('jump')) import('./jump.js?v=1103d');   // 测试用跳转按钮：网址带 ?jump 才装

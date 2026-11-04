@@ -1,11 +1,11 @@
 import * as THREE from 'three';
-import { BILL, SPOTS, ACTS, EGGS } from './scenes.js?v=1103z';
-import { createStage, createEggs, loadStageBytes } from './stage-test.js?v=1103z';   // 纸舞台（ham-stage 对话做的，接口见 blender/stage/接口.md）
-import { createStar } from './finale.js?v=1103z';   // 结尾折星（ham-star 对话做的，接口见 blender/star/接口.md）
-import { createPeople, INK_GLSL, ERASE_GLSL, peopleUniforms } from './people.js?v=1103z';
-import { openAlbum, closeAlbum, albumOpen } from './album.js?v=1103z';   // 邮票册（点右上 Stamps，用户 11-03 定稿）
-import { playStory, stopStory, showAd, hideAd, adOpen } from './curtain.js?v=1103z';   // 结尾：折星时放歌 + 介绍，飞上天后广告页（用户 11-03）   // 邮票册（点右上 Stamps，用户 11-03 定稿）
-import { createActs, ACT_SEC } from './acts.js?v=1103z';   // 主线三幕舞台上的剪影（ham-star 对话做的，接口见 blender/acts/接口.md）   // 彩蛋③ We the People（ham-star 对话做的，接口见 blender/people/接口.md）
+import { BILL, SPOTS, ACTS, EGGS } from './scenes.js?v=1104a';
+import { createStage, createEggs, loadStageBytes } from './stage-test.js?v=1104a';   // 纸舞台（ham-stage 对话做的，接口见 blender/stage/接口.md）
+import { createStar } from './finale.js?v=1104a';   // 结尾折星（ham-star 对话做的，接口见 blender/star/接口.md）
+import { createPeople, INK_GLSL, ERASE_GLSL, peopleUniforms } from './people.js?v=1104a';
+import { openAlbum, closeAlbum, albumOpen } from './album.js?v=1104a';   // 邮票册（点右上 Stamps，用户 11-03 定稿）
+import { playStory, stopStory, showAd, hideAd, adOpen } from './curtain.js?v=1104a';   // 结尾：折星时放歌 + 介绍，飞上天后广告页（用户 11-03）   // 邮票册（点右上 Stamps，用户 11-03 定稿）
+import { createActs, ACT_SEC } from './acts.js?v=1104a';   // 主线三幕舞台上的剪影（ham-star 对话做的，接口见 blender/acts/接口.md）   // 彩蛋③ We the People（ham-star 对话做的，接口见 blender/people/接口.md）
 
 const perf = window.__perf = { t0: performance.now(), frames: [], longTasks: [], marks: {} };
 try { new PerformanceObserver(l => l.getEntries().forEach(e => perf.longTasks.push({ at: Math.round(e.startTime), ms: Math.round(e.duration) }))).observe({ type: 'longtask', buffered: true }); } catch (e) {}
@@ -724,8 +724,8 @@ const called = {};
 function curtainCall(i) {   // 一幕演完的那一刻，舞台下方冒一行字（求职官 11-03 第 3 条：观众最投入的时候讲买票；不是弹窗，每幕一次，4 秒淡掉）
   if (called[i] || state.folding) return; called[i] = true;
   let el = $('#curtain-call'); if (!el) { el = document.createElement('p'); el.id = 'curtain-call'; document.body.appendChild(el); }
-  const t = shortTitle(L1(ACTS[i].zh, ACTS[i].en)), a = `<a href="${TICKETS_URL}" target="_blank" rel="noopener">${L1('去官网买票', 'Get tickets')} &#8599;</a>`;
-  el.innerHTML = L1(`《${t}》演完了。去现场看完整的剧 · ${a}`, `That was “${t}.” See the whole show live · ${a}`);
+  const t = shortTitle(L1(ACTS[i].zh, ACTS[i].en)), A = (u, s) => `<a href="${u}" target="_blank" rel="noopener">${s}</a>`;
+  el.innerHTML = L1(`《${t}》演完了。去看现场——${A(TICKETS_URL, '买票')}，或${A(LOTTERY_URL, '试试 10 美元抽票 &#8599;')}`, `That was “${t}.” See it live — ${A(TICKETS_URL, 'get tickets')}, or ${A(LOTTERY_URL, 'try the $10 lottery &#8599;')}`);   // 11-04 求职官定字
   el.classList.add('on'); clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('on'), 4000);
 }
 function skipToEnd() {   // 右上角 Skip to the end（用户 11-03：门槛不降，但要能直接看结尾——招聘方只有一分钟）：照常折星、放歌，再到广告页
@@ -785,7 +785,7 @@ const EGG_PLUG = {   // 每个彩蛋带一句剧的信息（求职官 11-03 第 
   watermark: ['全剧最后一首歌，去百老汇现场听。', 'The show’s final song — hear it live on Broadway.'],
 };
 const ACT_PLUG = [['开场曲，去百老汇现场听。', 'The opening number — hear it live on Broadway.'], ['第一幕的歌，去百老汇现场听。', 'From Act One — hear it live on Broadway.'], ['第一幕的歌，去百老汇现场听。', 'From Act One — hear it live on Broadway.']];   // 三幕跟彩蛋同一行同一个写法（求职官 11-03）
-const TICKETS_URL = 'https://hamiltonmusical.com/';
+const TICKETS_URL = 'https://hamiltonmusical.com/', LOTTERY_URL = 'https://hamiltonmusical.com/lottery/';   // 10 美元只跟抽票放在一起，不写 only $10（求职官 11-04：那等于报错价）
 const RING_WHERE = { torch: ['火炬', 'THE TORCH'], people: ['手写的 We the People', 'WE THE PEOPLE'], ten: ['会变色的 10', 'THE SHIFTING TEN'], watermark: ['水印', 'THE WATERMARK'], treasury: ['财政部大楼', 'THE TREASURY'] };   // 圆章环上写它藏在哪（要短，一圈放得下）
 let cardData = null;
 function idleCard() {   // 没在演、没开彩蛋：下条讲钞票本身
@@ -810,11 +810,12 @@ function renderCard() {
   $('#card-title').textContent = shortTitle(L1(c.zh, c.en));
   $('#card-line').textContent = shortLine(L1(c.line, c.lineEn), !!c.plug);
   const plug = $('#card-plug'), STUB = '<svg class="stub" viewBox="0 0 26 14" aria-hidden="true"><path d="M0 0H26V4.5A2.5 2.5 0 0 0 26 9.5V14H0V9.5A2.5 2.5 0 0 0 0 4.5Z" fill="currentColor"/><path d="M20 2.5V11.5" stroke="var(--bill-cream)" stroke-width="1.2" stroke-dasharray="1.4 1.6"/></svg>';   // 小票根：跟左上角 B 同一个样子（求职官 11-04：认得出，不用更大）
-  const plugHtml = t => `<span>${t}</span> <a href="${TICKETS_URL}" target="_blank" rel="noopener">${STUB}${L1('去官网买票', 'Get tickets')} &#8599;</a>`;
+  const plugHtml = (t, short) => `<span>${t}</span> <a href="${TICKETS_URL}" target="_blank" rel="noopener">${STUB}${L1('买票', short ? 'Tickets' : 'Get tickets')}</a> · <a href="${LOTTERY_URL}" target="_blank" rel="noopener">${L1('10 美元抽票', '$10 lottery')} &#8599;</a>`;   // 买票链官网、抽票链抽票页（11-04）
   plug.innerHTML = c.plug ? plugHtml(L1(c.plug[0], c.plug[1])) : ''; plug.hidden = !c.plug;
   const fits = () => plug.scrollWidth <= (plug.parentNode.clientWidth || 340);
   if (c.plug && !fits()) plug.innerHTML = plugHtml(L1(c.plug[0], c.plug[1]).replace('hear it live on Broadway', 'live on Broadway').replace(/^From /, ''));
-  if (c.plug && !fits()) plug.innerHTML = plugHtml(L1('去百老汇现场听。', 'Live on Broadway.'));   // 手机上还放不下：只留最短的一句   // 放不下就把前半句缩短，Get tickets 不掉到第二行   // 那一行后面接买票链接（求职官 11-03 第 2 条：不另加按钮，免得跟 Spotify 抢）
+  if (c.plug && !fits()) plug.innerHTML = plugHtml(L1('去百老汇现场听。', 'Live on Broadway.'));   // 手机上还放不下：只留最短的一句
+  if (c.plug && !fits()) plug.innerHTML = plugHtml(L1('去百老汇现场听。', 'Live on Broadway.'), true);   // 再放不下：Get tickets 缩成 Tickets，不折行   // 放不下就把前半句缩短，Get tickets 不掉到第二行   // 那一行后面接买票链接（求职官 11-03 第 2 条：不另加按钮，免得跟 Spotify 抢）
   drawSeal(c.num, L1(c.ringZh, c.ring), c.img); fitTitle();
 }
 function fitTitle() {   // 曲名太长就缩小，不超出 340 的格子
@@ -1044,7 +1045,7 @@ $('#sound').addEventListener('click', () => {
 function setLangKeys() {
   document.documentElement.classList.toggle('zh', !LANG_EN);
   $('#lang').innerHTML = LANG_EN ? 'EN / <span class="off">中</span>' : '<span class="off">EN</span> / 中';
-  $('#brand .b2').textContent = L1('一部美国音乐剧', 'An American Musical'); $('#brand .b3').firstChild.textContent = L1('去官网买票 ', 'Get tickets ');
+  $('#brand .b2').textContent = L1('一部美国音乐剧', 'An American Musical'); $('#brand .b3').firstChild.textContent = L1('去官网买票 ', 'Get tickets '); $('#brand .b5').innerHTML = L1('或试试 10 美元抽票 &#8599;', 'or try the $10 lottery &#8599;');
   $('#street .w').textContent = L1('回到街上', 'Street'); $('#sound .w').textContent = L1('声音', 'Sound'); $('#stamps .w').textContent = L1('邮票册', 'Stamps'); $('#skip .w').textContent = L1('直接看结尾 →', 'Skip to the end →'); $('#brand .b4').textContent = L1('11 项托尼奖 · 普利策戏剧奖', '11 Tony Awards · Pulitzer Prize');
 }
 $('#lang').addEventListener('click', () => {
@@ -1119,4 +1120,4 @@ $('#credits-close').addEventListener('click', () => $('#credits').close());
 window.__ham = { renderCard: () => renderCard(), state, uniforms, aim: aimCamera, open, flip, showAct, closeCard, popUp, startFinale, replay, closeStage, foldStar, wake, renderer, camera, scene, get stage() { return stage; }, get acts() { return acts; }, get act3Ham() { return act3Ham; }, get star() { return star; }, get eggs() { return eggs; },
   idle: () => !raf, info: () => ({ calls: renderer.info.render.calls, tris: renderer.info.render.triangles, programs: renderer.info.programs.length }),
   gpu: () => { const gl = renderer.getContext(), e = gl.getExtension('WEBGL_debug_renderer_info'); return e ? gl.getParameter(e.UNMASKED_RENDERER_WEBGL) : '?'; } };
-if (new URLSearchParams(location.search).has('jump')) import('./jump.js?v=1103z');   // 测试用跳转按钮：网址带 ?jump 才装
+if (new URLSearchParams(location.search).has('jump')) import('./jump.js?v=1104a');   // 测试用跳转按钮：网址带 ?jump 才装

@@ -310,3 +310,15 @@ body:has(#ad.on) #tip { display: none; }   /* 广告页出来时收起刮刮条�
   #ld-count .cap { font-size: 34px; white-space: normal; width: 1000px; }   /* 手机上整台印钞机缩成三分之一：说明字单独放大、可以折行 */
   #ld-count .cap::before, #ld-count .cap::after { display: none; }
 }
+
+/* 11-04：左上角票根下面一行小字链抽票页（字号跟 11 TONY AWARDS 那行一样） */
+#brand a { color: inherit; text-decoration: none; }
+#brand .b3 { color: var(--bill-cream); }
+#brand .b5 { margin-top: 7px; font: 600 10px/1 Cinzel, "Songti SC", serif; letter-spacing: .14em; text-decoration: underline; text-underline-offset: 3px; }
+#brand .b5:hover { text-decoration-thickness: 2px; }
+html.zh #brand .b5 { font-size: 12px; letter-spacing: .06em; }
+#card-plug a + a { margin-left: 0; }
+@media (max-width: 599px) {
+  #brand .b5 { font-size: 10px; margin-top: 6px; }
+  #tip { top: calc(124px + env(safe-area-inset-top)); }
+}

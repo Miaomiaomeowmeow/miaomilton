@@ -1,11 +1,11 @@
 import * as THREE from 'three';
-import { BILL, SPOTS, ACTS, EGGS } from './scenes.js?v=1103h';
-import { createStage, createEggs, loadStageBytes } from './stage-test.js?v=1103h';   // 纸舞台（ham-stage 对话做的，接口见 blender/stage/接口.md）
-import { createStar } from './finale.js?v=1103h';   // 结尾折星（ham-star 对话做的，接口见 blender/star/接口.md）
-import { createPeople, INK_GLSL, ERASE_GLSL, peopleUniforms } from './people.js?v=1103h';
-import { openAlbum, closeAlbum, albumOpen } from './album.js?v=1103h';   // 邮票册（点右上 Stamps，用户 11-03 定稿）
-import { playStory, stopStory, showAd, hideAd } from './curtain.js?v=1103h';   // 结尾：折星时放歌 + 介绍，飞上天后广告页（用户 11-03）   // 邮票册（点右上 Stamps，用户 11-03 定稿）
-import { createActs, ACT_SEC } from './acts.js?v=1103h';   // 主线三幕舞台上的剪影（ham-star 对话做的，接口见 blender/acts/接口.md）   // 彩蛋③ We the People（ham-star 对话做的，接口见 blender/people/接口.md）
+import { BILL, SPOTS, ACTS, EGGS } from './scenes.js?v=1103i';
+import { createStage, createEggs, loadStageBytes } from './stage-test.js?v=1103i';   // 纸舞台（ham-stage 对话做的，接口见 blender/stage/接口.md）
+import { createStar } from './finale.js?v=1103i';   // 结尾折星（ham-star 对话做的，接口见 blender/star/接口.md）
+import { createPeople, INK_GLSL, ERASE_GLSL, peopleUniforms } from './people.js?v=1103i';
+import { openAlbum, closeAlbum, albumOpen } from './album.js?v=1103i';   // 邮票册（点右上 Stamps，用户 11-03 定稿）
+import { playStory, stopStory, showAd, hideAd } from './curtain.js?v=1103i';   // 结尾：折星时放歌 + 介绍，飞上天后广告页（用户 11-03）   // 邮票册（点右上 Stamps，用户 11-03 定稿）
+import { createActs, ACT_SEC } from './acts.js?v=1103i';   // 主线三幕舞台上的剪影（ham-star 对话做的，接口见 blender/acts/接口.md）   // 彩蛋③ We the People（ham-star 对话做的，接口见 blender/people/接口.md）
 
 const perf = window.__perf = { t0: performance.now(), frames: [], longTasks: [], marks: {} };
 try { new PerformanceObserver(l => l.getEntries().forEach(e => perf.longTasks.push({ at: Math.round(e.startTime), ms: Math.round(e.duration) }))).observe({ type: 'longtask', buffered: true }); } catch (e) {}
@@ -431,7 +431,7 @@ function draw() {
   if (state.starT0) {
     const t = now - state.starT0;
     star.set(clamp01(t / star.foldMs), clamp01((t - star.foldMs - 300) / star.riseMs));
-    if (t > star.foldMs + 300 + star.riseMs) { state.starT0 = 0; state.phase = 'done'; mark('finaleDone'); stopStory(); $('#card').hidden = true; showAd(LANG_EN, replay); }   // 星飞上天：底条收起，出广告页
+    if (t > star.foldMs + 300 + star.riseMs) { state.starT0 = 0; state.phase = 'done'; mark('finaleDone'); stopStory(); showAd(LANG_EN, replay); }   // 星飞上天：出广告页；底条和 Spotify 留着（歌还在放，版权要看得见）
     busy = true;
   }
   // 彩蛋③：红字一笔笔卷成纸条叠到印章上（约 5.8 秒）；关掉卡片时倒着收回去（快一倍）
@@ -791,7 +791,7 @@ function drawSeal(num, ring, img) {   // 照真钞印章：外圈锯齿 → 一�
 }
 function fillCard(c) {
   cardData = c; renderCard(); document.body.classList.add('card-open');
-  if (c.track) play(c.track); else if (!c.keep) stop();   // keep：结尾介绍换句时歌接着放
+  if (c.keep) {} else if (c.track) play(c.track); else stop();   // keep：结尾介绍换句时歌接着放，播放器也一直显示（用户 11-03：版权要看得见 Spotify）
   $('#player').classList.add('away'); clearTimeout(playerTimer); playerTimer = setTimeout(placePlayer, 900);
   wake();
 }
@@ -1065,4 +1065,4 @@ $('#credits-close').addEventListener('click', () => $('#credits').close());
 window.__ham = { renderCard: () => renderCard(), state, uniforms, aim: aimCamera, open, flip, showAct, closeCard, popUp, startFinale, replay, closeStage, foldStar, wake, renderer, camera, scene, get stage() { return stage; }, get acts() { return acts; }, get act3Ham() { return act3Ham; }, get star() { return star; }, get eggs() { return eggs; },
   idle: () => !raf, info: () => ({ calls: renderer.info.render.calls, tris: renderer.info.render.triangles, programs: renderer.info.programs.length }),
   gpu: () => { const gl = renderer.getContext(), e = gl.getExtension('WEBGL_debug_renderer_info'); return e ? gl.getParameter(e.UNMASKED_RENDERER_WEBGL) : '?'; } };
-if (new URLSearchParams(location.search).has('jump')) import('./jump.js?v=1103h');   // 测试用跳转按钮：网址带 ?jump 才装
+if (new URLSearchParams(location.search).has('jump')) import('./jump.js?v=1103i');   // 测试用跳转按钮：网址带 ?jump 才装

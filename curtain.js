@@ -14,7 +14,7 @@ let timer = 0, ad = null;
 // 折星开始时调：lines 依次填进底条（fill 是 main.js 的 fillCard）
 export function playStory(fill, en) {
   clearInterval(timer); let i = 0;
-  const show = () => { const [zh, e] = LINES[i % LINES.length]; fill({ num: '★', ring: 'HAMILTON · AN AMERICAN MUSICAL · ', ringZh: '汉密尔顿 · 一部美国音乐剧 · ', zh: '关于这部剧', en: 'About the Show', line: zh, lineEn: e, track: i === 0 ? FINALE_TRACK : undefined, keep: i > 0 }); i++; };
+  const show = () => { const [zh, e] = LINES[i % LINES.length]; fill({ num: '★', ring: 'HAMILTON · AN AMERICAN MUSICAL · ', ringZh: '汉密尔顿 · 一部美国音乐剧 · ', zh: '关于这部剧', en: 'About the Show', line: zh, lineEn: e, track: FINALE_TRACK, keep: i > 0 }); i++; };
   show(); timer = setInterval(() => { if (i >= LINES.length) { clearInterval(timer); return; } show(); }, 3000);
 }
 export function stopStory() { clearInterval(timer); }

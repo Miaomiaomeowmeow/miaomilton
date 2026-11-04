@@ -1,11 +1,11 @@
 import * as THREE from 'three';
-import { BILL, SPOTS, ACTS, EGGS } from './scenes.js?v=1103r';
-import { createStage, createEggs, loadStageBytes } from './stage-test.js?v=1103r';   // 纸舞台（ham-stage 对话做的，接口见 blender/stage/接口.md）
-import { createStar } from './finale.js?v=1103r';   // 结尾折星（ham-star 对话做的，接口见 blender/star/接口.md）
-import { createPeople, INK_GLSL, ERASE_GLSL, peopleUniforms } from './people.js?v=1103r';
-import { openAlbum, closeAlbum, albumOpen } from './album.js?v=1103r';   // 邮票册（点右上 Stamps，用户 11-03 定稿）
-import { playStory, stopStory, showAd, hideAd, adOpen } from './curtain.js?v=1103r';   // 结尾：折星时放歌 + 介绍，飞上天后广告页（用户 11-03）   // 邮票册（点右上 Stamps，用户 11-03 定稿）
-import { createActs, ACT_SEC } from './acts.js?v=1103r';   // 主线三幕舞台上的剪影（ham-star 对话做的，接口见 blender/acts/接口.md）   // 彩蛋③ We the People（ham-star 对话做的，接口见 blender/people/接口.md）
+import { BILL, SPOTS, ACTS, EGGS } from './scenes.js?v=1103t';
+import { createStage, createEggs, loadStageBytes } from './stage-test.js?v=1103t';   // 纸舞台（ham-stage 对话做的，接口见 blender/stage/接口.md）
+import { createStar } from './finale.js?v=1103t';   // 结尾折星（ham-star 对话做的，接口见 blender/star/接口.md）
+import { createPeople, INK_GLSL, ERASE_GLSL, peopleUniforms } from './people.js?v=1103t';
+import { openAlbum, closeAlbum, albumOpen } from './album.js?v=1103t';   // 邮票册（点右上 Stamps，用户 11-03 定稿）
+import { playStory, stopStory, showAd, hideAd, adOpen } from './curtain.js?v=1103t';   // 结尾：折星时放歌 + 介绍，飞上天后广告页（用户 11-03）   // 邮票册（点右上 Stamps，用户 11-03 定稿）
+import { createActs, ACT_SEC } from './acts.js?v=1103t';   // 主线三幕舞台上的剪影（ham-star 对话做的，接口见 blender/acts/接口.md）   // 彩蛋③ We the People（ham-star 对话做的，接口见 blender/people/接口.md）
 
 const perf = window.__perf = { t0: performance.now(), frames: [], longTasks: [], marks: {} };
 try { new PerformanceObserver(l => l.getEntries().forEach(e => perf.longTasks.push({ at: Math.round(e.startTime), ms: Math.round(e.duration) }))).observe({ type: 'longtask', buffered: true }); } catch (e) {}
@@ -798,12 +798,12 @@ function renderCard() {
   const plug = $('#card-plug'), STUB = '<svg class="stub" viewBox="0 0 26 14" aria-hidden="true"><path d="M0 0H26V4.5A2.5 2.5 0 0 0 26 9.5V14H0V9.5A2.5 2.5 0 0 0 0 4.5Z" fill="currentColor"/><path d="M20 2.5V11.5" stroke="var(--bill-cream)" stroke-width="1.2" stroke-dasharray="1.4 1.6"/></svg>';   // 小票根：跟左上角 B 同一个样子（求职官 11-04：认得出，不用更大）
   const plugHtml = t => `<span>${t}</span> <a href="${TICKETS_URL}" target="_blank" rel="noopener">${STUB}${L1('去官网买票', 'Get tickets')} &#8599;</a>`;
   plug.innerHTML = c.plug ? plugHtml(L1(c.plug[0], c.plug[1])) : ''; plug.hidden = !c.plug;
-  if (c.plug && plug.scrollWidth > 340) plug.innerHTML = plugHtml(L1(c.plug[0], c.plug[1]).replace('hear it live on Broadway', 'live on Broadway').replace(/^From /, ''));   // 放不下就把前半句缩短，Get tickets 不掉到第二行   // 那一行后面接买票链接（求职官 11-03 第 2 条：不另加按钮，免得跟 Spotify 抢）
+  if (c.plug && plug.scrollWidth > (plug.parentNode.clientWidth || 340)) plug.innerHTML = plugHtml(L1(c.plug[0], c.plug[1]).replace('hear it live on Broadway', 'live on Broadway').replace(/^From /, ''));   // 放不下就把前半句缩短，Get tickets 不掉到第二行   // 那一行后面接买票链接（求职官 11-03 第 2 条：不另加按钮，免得跟 Spotify 抢）
   drawSeal(c.num, L1(c.ringZh, c.ring), c.img); fitTitle();
 }
 function fitTitle() {   // 曲名太长就缩小，不超出 340 的格子
   const t = $('#card-title'); t.style.fontSize = '';
-  const w = t.scrollWidth; if (w > 340) t.style.fontSize = (parseFloat(getComputedStyle(t).fontSize) * 340 / w) + 'px';
+  const max = t.parentNode.clientWidth || 340, w = t.scrollWidth; if (w > max) t.style.fontSize = (parseFloat(getComputedStyle(t).fontSize) * max / w) + 'px';   // 格子宽度按实际算（手机上窄）
 }
 document.fonts && document.fonts.ready.then(fitTitle);
 function drawSeal(num, ring, img) {   // 照真钞印章：外圈锯齿 → 一圈字沿圆环走 → 中间一个大数字（三幕）或一张邮票小图（彩蛋）
@@ -960,7 +960,7 @@ function paintCoat() {   // 刮刮层：银色刮刮胶（用户 11-03：金色�
 function placeScratch() {   // 盖在提示那一行上，大小跟着提示变
   const tip = $('#tip'); if (!scratch.parentNode) tip.appendChild(scratch); tip.classList.add('covered');   // 提示后面不垫淡光（刮开以后也不垫，用户 11-03），刮痕就是底
   if (scratched && !scratch.classList.contains('scraped')) scratchReady = false;   // 这次访问早就刮开过：重画成刮开的样子
-  const r = tip.getBoundingClientRect(), w = 560, h = 64;   // 跟提示条一样固定大小
+  const PH = innerWidth < 600, w = PH ? innerWidth - 32 : 560, h = PH ? 84 : 64;   // 跟提示条一样固定大小（手机：屏宽减两边 16、高一点放得下四行）
   if (scratchReady && Math.abs(w - scratchW) < 2 && Math.abs(h - scratchH) < 2) return;
   const dpr = Math.min(devicePixelRatio || 1, 2); scratchW = w; scratchH = h; const wasScraped = scratched; scratch.width = w * dpr; scratch.height = h * dpr;
   scratch.style.width = w + 'px'; scratch.style.height = h + 'px'; scratch.style.left = '0px'; scratch.style.top = '-6px'; scratchReady = true; paintCoat(); if (wasScraped) scrapeOpen();   // 提示条和刮刮层都固定 560 宽，贴齐左边（以前按量到的宽度居中，提示条藏着时量到 0，往左偏了 280）
@@ -1103,4 +1103,4 @@ $('#credits-close').addEventListener('click', () => $('#credits').close());
 window.__ham = { renderCard: () => renderCard(), state, uniforms, aim: aimCamera, open, flip, showAct, closeCard, popUp, startFinale, replay, closeStage, foldStar, wake, renderer, camera, scene, get stage() { return stage; }, get acts() { return acts; }, get act3Ham() { return act3Ham; }, get star() { return star; }, get eggs() { return eggs; },
   idle: () => !raf, info: () => ({ calls: renderer.info.render.calls, tris: renderer.info.render.triangles, programs: renderer.info.programs.length }),
   gpu: () => { const gl = renderer.getContext(), e = gl.getExtension('WEBGL_debug_renderer_info'); return e ? gl.getParameter(e.UNMASKED_RENDERER_WEBGL) : '?'; } };
-if (new URLSearchParams(location.search).has('jump')) import('./jump.js?v=1103r');   // 测试用跳转按钮：网址带 ?jump 才装
+if (new URLSearchParams(location.search).has('jump')) import('./jump.js?v=1103t');   // 测试用跳转按钮：网址带 ?jump 才装

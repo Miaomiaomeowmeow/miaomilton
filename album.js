@@ -36,30 +36,31 @@ export function openAlbum(data, closeCb) {
   const L = (zh, en) => data.en ? en : zh, cs = getComputedStyle(document.documentElement);
   const ink = cs.getPropertyValue('--bill-ink').trim() || '#4a4532', paper = 'rgba(242,235,212,.6)';
   const nFound = STAMPS.filter(s => data.found[s.k]).length, nSeen = data.acts.filter(a => a.seen).length;
-  root = document.createElement('div'); root.id = 'album'; root.setAttribute('role', 'dialog'); root.setAttribute('aria-label', L('邮票册', 'Stamp album'));
+  const P = innerWidth < 600, CX = P ? 210 : 500;   // 手机竖屏（用户 11-04 要手机版）：盒子 420 宽，竖着排
+  root = document.createElement('div'); root.id = 'album'; if (P) root.classList.add('phone'); root.setAttribute('role', 'dialog'); root.setAttribute('aria-label', L('邮票册', 'Stamp album'));
   const box = document.createElement('div'); box.className = 'al-box'; root.appendChild(box);
   const add = (cls, html, css) => { const d = document.createElement('div'); d.className = cls; d.innerHTML = html; d.style.cssText = css; box.appendChild(d); return d; };
   const line = '<span class="al-line"></span>';
-  add('al-close', `<i></i>${L('关上', 'close')}`, 'right:0;top:20px').addEventListener('click', () => closeAlbum());
-  add('al-t al-small', L('藏起来的五幕', 'HIDDEN SCENES'), 'left:500px;top:36px');
-  add('al-t al-big', L('邮票册', 'Stamps'), 'left:500px;top:52px');
-  add('al-t al-it', `${line}${data.en ? `${NUM[nFound]} of five found` : `找到了 ${NUM_ZH[nFound]} 枚，共五枚`}${line}`, 'left:500px;top:128px');
+  add('al-close', `<i></i>${L('关上', 'close')}`, P ? 'right:0;top:0' : 'right:0;top:20px').addEventListener('click', () => closeAlbum());
+  add('al-t al-small', L('藏起来的五幕', 'HIDDEN SCENES'), `left:${CX}px;top:${P ? 40 : 36}px`);
+  add('al-t al-big', L('邮票册', 'Stamps'), `left:${CX}px;top:${P ? 56 : 52}px`);
+  add('al-t al-it', `${line}${data.en ? `${NUM[nFound]} of five found` : `找到了 ${NUM_ZH[nFound]} 枚，共五枚`}${line}`, `left:${CX}px;top:${P ? 132 : 128}px`);
   STAMPS.forEach((s, i) => {
-    const x = 220 + i * 140, y = 178, got = !!data.found[s.k];
+    const x = P ? (i < 3 ? 23 + i * 140 : 93 + (i - 3) * 140) : 220 + i * 140, y = P ? (i < 3 ? 182 : 392) : 178, got = !!data.found[s.k];
     add('al-stamp' + (got ? '' : ' ghost'), `<div class="perf"></div><div class="img" style="background-image:url(${STAMP_IMG[s.img]})"></div>${got ? postmark(s.pm, 'alpm' + i, ink) : ''}`, `left:${x}px;top:${y}px;transform:rotate(${got ? (i % 2 ? 2 : -3) : 0}deg)`);
     add('al-cap' + (got ? '' : ' h'), got ? `${data.eggTitle[s.k]}<small>${L(s.where[0], s.where[1])}</small>` : L(s.hint[0], s.hint[1]), `left:${x - 23}px;top:${y + 142}px`);
   });
-  add('al-t', `<span class="al-rule"></span><span class="al-dia"></span><span class="al-rule"></span>`, 'left:500px;top:386px');
-  add('al-t al-small', L('三幕', 'THE THREE ACTS'), 'left:500px;top:414px');
+  add('al-t', `<span class="al-rule"></span><span class="al-dia"></span><span class="al-rule"></span>`, `left:${CX}px;top:${P ? 604 : 386}px`);
+  add('al-t al-small', L('三幕', 'THE THREE ACTS'), `left:${CX}px;top:${P ? 630 : 414}px`);
   data.acts.forEach((a, i) => {
-    const x = 132 + i * 262, long = a.title.length > (data.en ? 12 : 6);   // 长名字缩小一号（英文 Alexander Hamilton、中文 亚历山大·汉密尔顿）
-    add('al-tk', `${ticket(a.seen, ink, paper)}<div class="al-tk-t"><b>${L('第 ' + a.no + ' 幕', 'ACT ' + a.no)}</b><span${long ? ' class="long"' : ''}>${a.title}</span></div>`, `left:${x}px;top:446px`);
+    const x = P ? 88 : 132 + i * 262, long = a.title.length > (data.en ? 12 : 6);   // 长名字缩小一号（英文 Alexander Hamilton、中文 亚历山大·汉密尔顿）
+    add('al-tk', `${ticket(a.seen, ink, paper)}<div class="al-tk-t"><b>${L('第 ' + a.no + ' 幕', 'ACT ' + a.no)}</b><span${long ? ' class="long"' : ''}>${a.title}</span></div>`, `left:${x}px;top:${P ? 662 + i * 106 : 446}px`);
   });
-  add('al-t al-it', `${line}${data.en ? `${NUM[nSeen]} of three seen` : `看过 ${NUM_ZH[nSeen]} 幕，共三幕`}${line}`, 'left:500px;top:560px');
-  if (data.onSkip && (nFound < 5 || nSeen < 3)) add('al-t al-skip', L('不想找了？直接看结尾 →', 'No time? Skip to the end →'), 'left:500px;top:606px').addEventListener('click', () => { closeAlbum(true); data.onSkip(); });   // 找不到彩蛋的人会来翻邮票册（求职官 11-03）
+  add('al-t al-it', `${line}${data.en ? `${NUM[nSeen]} of three seen` : `看过 ${NUM_ZH[nSeen]} 幕，共三幕`}${line}`, `left:${CX}px;top:${P ? 1006 : 560}px`);
+  if (data.onSkip && (nFound < 5 || nSeen < 3)) add('al-t al-skip', L('不想找了？直接看结尾 →', 'No time? Skip to the end →'), `left:${CX}px;top:${P ? 1048 : 606}px`).addEventListener('click', () => { closeAlbum(true); data.onSkip(); });   // 找不到彩蛋的人会来翻邮票册（求职官 11-03）
   root.addEventListener('click', e => { if (e.target === root) closeAlbum(); });   // 点空白处关上
   document.body.appendChild(root);
-  const fit = () => { const s = Math.min(innerWidth / 1100, innerHeight / 700); box.style.transform = `translate(-50%,-50%) scale(${s})`; };
+  const fit = () => { const s = P ? Math.min(innerWidth / 440, innerHeight / 1120) : Math.min(innerWidth / 1100, innerHeight / 700); box.style.transform = `translate(-50%,-50%) scale(${s})`; };
   fit(); root._fit = fit; addEventListener('resize', fit);
   requestAnimationFrame(() => root && root.classList.add('on'));
 }

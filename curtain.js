@@ -32,7 +32,7 @@ export function showAd(en, onReplay, got, onKeep) {
     <div class="ad-rule"><span></span><i></i><span></span></div>
     <div class="ad-line">${L('正在百老汇和世界各地上演', 'Now playing on Broadway and around the world')}</div>
     <div class="ad-ten">${L('你用 10 美元进了这场纸上的戏。现在，去看真的。', 'You came in on ten dollars. Now see it live.')}</div>
-    <div class="ad-btns"><a class="ad-btn" href="${LOTTERY}" target="_blank" rel="noopener">${L('试试 10 美元抽票', 'Try the $10 lottery')}<b>↗</b></a><a class="ad-btn ad-btn2" href="${TICKETS}" target="_blank" rel="noopener">${L('去官网买票', 'Get tickets')}<b>↗</b></a></div>
+    <div class="ad-btns"><a class="ad-btn" href="${TICKETS}" target="_blank" rel="noopener">${L('去官网买票', 'Get tickets')}<b>↗</b></a><a class="ad-btn ad-btn2" href="${LOTTERY}" target="_blank" rel="noopener">${L('试试 10 美元抽票', 'Try the $10 lottery')}<b>↗</b></a></div>
     <div class="ad-links"><button class="ad-save" type="button">${L('存一张明信片，发给朋友', 'Save a postcard to share')}</button><span>·</span><button class="ad-replay" type="button">${L('再看一遍', 'Play again')}</button>${got && got.length < 5 && onKeep ? `<span>·</span><button class="ad-keep" type="button">${L(`接着找 · 找到 ${got.length}/5 个彩蛋`, `Keep exploring · ${got.length}/5 found`)}</button>` : ''}</div>
     <div class="ad-fine">${L('Miaomiao 的同人作品 · 与官方制作无关', 'A fan work by Miaomiao · not affiliated with the official production')}</div>
   </div>`;
